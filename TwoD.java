@@ -1,8 +1,6 @@
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
-
 import javax.imageio.ImageIO;
 
 import jcuda.Pointer;
@@ -11,14 +9,11 @@ import jcuda.jcusparse.JCusparse;
 import jcuda.jcusparse.cusparseHandle;
 import jcuda.jcusparse.cusparseMatDescr;
 import jcuda.runtime.JCuda;
-import jcuda.jcusparse.*;
 import static jcuda.runtime.cudaMemcpyKind.*;
 import static jcuda.jcusparse.JCusparse.*;
 import static jcuda.jcusparse.cusparseIndexBase.CUSPARSE_INDEX_BASE_ZERO;
 import static jcuda.jcusparse.cusparseMatrixType.CUSPARSE_MATRIX_TYPE_GENERAL;
-import static jcuda.jcusparse.cusparseOperation.CUSPARSE_OPERATION_NON_TRANSPOSE;
 import static jcuda.runtime.JCuda.*;
-import static jcuda.runtime.cudaMemcpyKind.*;
 
 
 public class TwoD {
@@ -108,13 +103,17 @@ public class TwoD {
 	    cusparseMatDescr descrA_t = new cusparseMatDescr();
 	    cusparseMatDescr descrC = new cusparseMatDescr();
 	    
-	    cudaMalloc(ARowCooPtr, nnzA*Sizeof.INT);
+	    cudaMalloc(ARowCooPtr, nnzA*Sizeof.INT); //allocate pointer memory
 	    cudaMalloc(AColCooPtr, nnzA*Sizeof.INT);
 	    cudaMalloc(AValCooPtr, nnzA*Sizeof.DOUBLE);
 	    
 	    cudaMalloc(ARowCSRPtr, (nnzA+1)*Sizeof.INT);
 	    cudaMalloc(AColCSRPtr, nnzA*Sizeof.INT);
 	    cudaMalloc(AValCSRPtr, nnzA*Sizeof.DOUBLE);
+	    
+	    cudaMalloc(A_tRowCSRPtr, (nnzA+1)*Sizeof.INT);
+	    cudaMalloc(A_tColCSRPtr, nnzA*Sizeof.INT);
+	    cudaMalloc(A_tValCSRPtr, nnzA*Sizeof.DOUBLE);
 	    
 	    cudaMalloc(CRowCooPtr, nnzC*Sizeof.INT);
 	    cudaMalloc(CColCooPtr, nnzC*Sizeof.INT);
@@ -124,13 +123,27 @@ public class TwoD {
 	    cudaMalloc(CColCSRPtr, nnzC*Sizeof.INT);
 	    cudaMalloc(CValCSRPtr, nnzC*Sizeof.DOUBLE);
 	    
+	    //Create pointers pointing to arrays
+	    
 	    cudaMemcpy(ARowCooPtr, Pointer.to(ARowCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
 	    cudaMemcpy(AColCooPtr, Pointer.to(AColCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
 	    cudaMemcpy(AValCooPtr, Pointer.to(AValCoo), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
 	    
+	    cudaMemcpy(ARowCSRPtr, Pointer.to(ARowCSR), (nnzA+1)*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(AColCSRPtr, Pointer.to(AColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(AValCSRPtr, Pointer.to(AValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    
+	    cudaMemcpy(A_tRowCSRPtr, Pointer.to(A_tRowCSR), (nnzA+1)*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(A_tColCSRPtr, Pointer.to(A_tColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(A_tValCSRPtr, Pointer.to(A_tValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    
 	    cudaMemcpy(CRowCooPtr, Pointer.to(CRowCoo), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
 	    cudaMemcpy(CColCooPtr, Pointer.to(CColCoo), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
 	    cudaMemcpy(CValCooPtr, Pointer.to(CValCoo), nnzC*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    
+	    cudaMemcpy(CRowCSRPtr, Pointer.to(CRowCSR), (nnzC+1)*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(CColCSRPtr, Pointer.to(CColCSR), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(CValCSRPtr, Pointer.to(CValCSR), nnzC*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
 	    
 	    
 	    
@@ -199,7 +212,9 @@ public class TwoD {
 	    
 	    cusparseXcoo2csr(handle, AColCooPtr, nnzA, pixelCount, A_tRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    A_tColCSR = ARowCoo;
-	    
+	    A_tValCSR = AValCoo;
+	    cudaMemcpy(A_tColCSRPtr, Pointer.to(A_tColCSR), nnzA*Sizeof.INT, CUSPARSE_INDEX_BASE_ZERO);
+	    cudaMemcpy(A_tValCSRPtr, Pointer.to(A_tValCSR), nnzA*Sizeof.DOUBLE, CUSPARSE_INDEX_BASE_ZERO);
 	    
 	    cusparseXcoo2csr(handle, CRowCooPtr, nnzC, nnzC, CRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    CColCSR = CColCoo;
@@ -207,10 +222,40 @@ public class TwoD {
 	    cudaMemcpy(CColCSRPtr, Pointer.to(CColCSR), nnzC*Sizeof.INT, CUSPARSE_INDEX_BASE_ZERO);
 	    cudaMemcpy(CValCSRPtr, Pointer.to(CValCSR), nnzC*Sizeof.DOUBLE, CUSPARSE_INDEX_BASE_ZERO);
 	    
-	    System.out.println(ARowCSRPtr.toString());
-	    System.out.println(CRowCSRPtr.toString());
+	    JCuda.cudaDeviceSynchronize();
+	    
+	    System.out.println();
+	    for (int i = 0; i < nnzA; i++) {
+	    	System.out.print(ARowCoo[i] + ", ");
+	    }
+	    System.out.println();
+	    for (int i = 0; i < nnzA+1; i++) {
+	    	System.out.print(ARowCSR[i] + ", ");
+	    }
 	    
 	    
+	    
+	    cudaFree(ARowCooPtr);
+	    cudaFree(AColCooPtr);
+	    cudaFree(AValCooPtr);
+	    
+	    cudaFree(ARowCSRPtr);
+	    cudaFree(AColCSRPtr);
+	    cudaFree(AValCSRPtr);
+	    
+	    cudaFree(A_tRowCSRPtr);
+	    cudaFree(A_tColCSRPtr);
+	    cudaFree(A_tValCSRPtr);
+	    
+	    cudaFree(CRowCooPtr);
+	    cudaFree(CColCooPtr);
+	    cudaFree(CValCooPtr);
+	   
+	    cudaFree(CRowCSRPtr);
+	    cudaFree(CColCSRPtr);
+	    cudaFree(CValCSRPtr);
+	    
+	    cusparseDestroy(handle);
 	    
 		//can create laplacian matrix directly (requires degree for every node stored and searching by index for an edge)
 		//very expensive
@@ -242,16 +287,6 @@ public class TwoD {
 		
 		
 	}
-	
-	private static class Edge {
-	    public int start;
-	    public int end;
-	    public Edge(int l, int r) {
-	      this.start = l;
-	      this.end = r;
-	    }
-
-	  }
 
 }
 
