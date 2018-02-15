@@ -41,9 +41,18 @@ public class TwoD {
 		}
 		
 		int width = image.getWidth(); //get image width
+		String out = String.format("width:%d", width);
+		System.out.println(out);
 		int height = image.getHeight(); //get image height
+		out = String.format("height:%d", height);
+		System.out.println(out);
+		
 		int pixelCount = width*height; //compute number of pixels
+		out = String.format("Pixels:%d", pixelCount);
+		System.out.println(out);
 	    int edgeCount = (width*(height-1))+(height*(width-1)); //compute number of edges
+	    out = String.format("Edges:%d", edgeCount);
+	    System.out.println(out);
 	    
 	    int nnzC = edgeCount; //number of (non-zero) elements in matrix C (constitutive matrix)
 	    int nnzA = edgeCount*2; //number of (non-zero) elements in matrix A (incidence matrix)
@@ -69,32 +78,7 @@ public class TwoD {
 	    int CRowCSR[] = new int[nnzC+1]; //arrays to hold matrix C in CSR format
 	    int CColCSR[] = new int[nnzC];
 	    double CValCSR[] = new double[nnzC];
-	    
-	    //COO format
-	    Pointer ARowCooPtr = new Pointer(); //pointer for row indices of A
-	    Pointer AColCooPtr = new Pointer(); //pointer for column incices of A
-	    Pointer AValCooPtr = new Pointer(); //pointer for values of A
-	    
-	    //CSR format
-	    Pointer ARowCSRPtr = new Pointer(); //pointer for row indices of A
-	    Pointer AColCSRPtr = new Pointer(); //pointer for column indices of A
-	    Pointer AValCSRPtr = new Pointer(); //pointer for values of A
-	    
-	    //CSR format
-	    Pointer A_tRowCSRPtr = new Pointer(); //pointer for row indices of A^T
-	    Pointer A_tColCSRPtr = new Pointer(); //pointer for column indices of A^T
-	    Pointer A_tValCSRPtr = new Pointer(); //pointer for values of A^T
-	    
-	    //COO format
-	    Pointer CRowCooPtr = new Pointer(); //pointer for row indices of C
-	    Pointer CColCooPtr = new Pointer(); //pointer for column indices of C
-	    Pointer CValCooPtr = new Pointer(); //pointer for values of C
-	    
-	    //CSR format
-	    Pointer CRowCSRPtr = new Pointer(); //pointer for row indices of C
-	    Pointer CColCSRPtr = new Pointer(); //pointer for column indices of C
-	    Pointer CValCSRPtr = new Pointer(); //pointer for values of C
-	    
+	    	    
 	    JCusparse.setExceptionsEnabled(true); //enable exceptions in jcuda
 	    JCuda.setExceptionsEnabled(true);
 	    
@@ -102,52 +86,7 @@ public class TwoD {
 	    cusparseMatDescr descrA = new cusparseMatDescr();
 	    cusparseMatDescr descrA_t = new cusparseMatDescr();
 	    cusparseMatDescr descrC = new cusparseMatDescr();
-	    
-	    cudaMalloc(ARowCooPtr, nnzA*Sizeof.INT); //allocate pointer memory
-	    cudaMalloc(AColCooPtr, nnzA*Sizeof.INT);
-	    cudaMalloc(AValCooPtr, nnzA*Sizeof.DOUBLE);
-	    
-	    cudaMalloc(ARowCSRPtr, (nnzA+1)*Sizeof.INT);
-	    cudaMalloc(AColCSRPtr, nnzA*Sizeof.INT);
-	    cudaMalloc(AValCSRPtr, nnzA*Sizeof.DOUBLE);
-	    
-	    cudaMalloc(A_tRowCSRPtr, (nnzA+1)*Sizeof.INT);
-	    cudaMalloc(A_tColCSRPtr, nnzA*Sizeof.INT);
-	    cudaMalloc(A_tValCSRPtr, nnzA*Sizeof.DOUBLE);
-	    
-	    cudaMalloc(CRowCooPtr, nnzC*Sizeof.INT);
-	    cudaMalloc(CColCooPtr, nnzC*Sizeof.INT);
-	    cudaMalloc(CValCooPtr, nnzC*Sizeof.DOUBLE);
-	    
-	    cudaMalloc(CRowCSRPtr, (nnzC+1)*Sizeof.INT);
-	    cudaMalloc(CColCSRPtr, nnzC*Sizeof.INT);
-	    cudaMalloc(CValCSRPtr, nnzC*Sizeof.DOUBLE);
-	    
-	    //Create pointers pointing to arrays
-	    
-	    cudaMemcpy(ARowCooPtr, Pointer.to(ARowCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(AColCooPtr, Pointer.to(AColCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(AValCooPtr, Pointer.to(AValCoo), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
-	    
-	    cudaMemcpy(ARowCSRPtr, Pointer.to(ARowCSR), (nnzA+1)*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(AColCSRPtr, Pointer.to(AColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(AValCSRPtr, Pointer.to(AValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
-	    
-	    cudaMemcpy(A_tRowCSRPtr, Pointer.to(A_tRowCSR), (nnzA+1)*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(A_tColCSRPtr, Pointer.to(A_tColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(A_tValCSRPtr, Pointer.to(A_tValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
-	    
-	    cudaMemcpy(CRowCooPtr, Pointer.to(CRowCoo), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(CColCooPtr, Pointer.to(CColCoo), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(CValCooPtr, Pointer.to(CValCoo), nnzC*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
-	    
-	    cudaMemcpy(CRowCSRPtr, Pointer.to(CRowCSR), (nnzC+1)*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(CColCSRPtr, Pointer.to(CColCSR), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
-	    cudaMemcpy(CValCSRPtr, Pointer.to(CValCSR), nnzC*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
-	    
-	    
-	    
-	    
+	        
 	    
 	    int pixel[] = new int[pixelCount]; //array of pixels, numbered l-r t-b
 	    Edge edge[] = new Edge[edgeCount]; //array of edges, numbered horizontally l-r followed by vertically t-b
@@ -156,6 +95,8 @@ public class TwoD {
 	    for (int j = 0; j < width; j++) {
 	      for (int i = 0; i < height; i++) {
 	        pixel[j*height+i] = image.getRGB(i, j); //read in each pixel (l-r, t-b);
+	        out = String.format("Pixel id %d", j*height+i);
+	        //System.out.println(out);
 	      }
 	    }
 	    
@@ -164,7 +105,11 @@ public class TwoD {
 	    //horizontal edges
 	    for (int j = 0; j < height; j++) {
 	      for (int i = 0; i < width; i++) {
-	        if (i != width-1) edge[edgeIndex++] = new Edge((j*height + i), (j*height + i + 1));
+	        if (i != width-1) {
+	        	edge[edgeIndex++] = new Edge((j*height + i), (j*height + i + 1));
+	        	out = String.format("Edge id: %d created", edgeIndex-1);
+	        	System.out.println(out);
+	        }
 	      }
 	    }
 	    
@@ -172,14 +117,18 @@ public class TwoD {
 	    for (int i = 0; i < width; i++) { //read in each edge, top-bottom
 	      for (int j = 0; j < height; j++) {
 	        if (j != height-1) edge[edgeIndex++] = new Edge(j*height + i, (j+1)*height + i);
+	        out = String.format("Edge id: %d created", edgeIndex-1);
+        	System.out.println(out);
 	      }
 	    }
 	    
 	    //create matrix C in COO format
 	    for (int i = 0; i < edgeCount; i++) {
-	      CRowCoo[i] = edge[i].start;
-	      CColCoo[i] = edge[i].end;
+	      CRowCoo[i] = i;
+	      CColCoo[i] = i;
 	      CValCoo[i] = weight(pixel[edge[i].start], pixel[edge[i].end]);
+	      out = String.format("Constitutive entry at (%d, %d) with value %f created", CRowCoo[i], CColCoo[i], CValCoo[i]);
+	      System.out.println(out);
 	    }
 	    
 	    int AEntries = 0; //create matrix A in COO format
@@ -187,9 +136,13 @@ public class TwoD {
 	      ARowCoo[AEntries] = edge[i].start;
 	      AColCoo[AEntries] = i;
 	      AValCoo[AEntries++] = -1;
+	      out = String.format("Incidence entry at (%d, %d) with value %f created", ARowCoo[AEntries-1], AColCoo[AEntries-1], AValCoo[AEntries-1]);
+	      //System.out.println(out);
 	      ARowCoo[AEntries] = edge[i].end;
 	      AColCoo[AEntries] = i;
 	      AValCoo[AEntries++] = 1;
+	      out = String.format("Incidence entry at (%d, %d) with value %f created", ARowCoo[AEntries-1], AColCoo[AEntries-1], AValCoo[AEntries-1]);
+	      //System.out.println(out);
 	    }
 	    
 	    cusparseCreate(handle);
@@ -204,56 +157,72 @@ public class TwoD {
 	    cusparseSetMatIndexBase(descrA_t, CUSPARSE_INDEX_BASE_ZERO);
 	    cusparseSetMatIndexBase(descrC, CUSPARSE_INDEX_BASE_ZERO);
 	    
-	    cusparseXcoo2csr(handle, ARowCooPtr, nnzA, nnzA/2, ARowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
-	    AColCSR = AColCoo;
-	    AValCSR = AValCoo;
-	    cudaMemcpy(AColCSRPtr, Pointer.to(AColCSR), nnzA*Sizeof.INT, CUSPARSE_INDEX_BASE_ZERO);
-	    cudaMemcpy(AValCSRPtr, Pointer.to(AValCSR), nnzA*Sizeof.DOUBLE, CUSPARSE_INDEX_BASE_ZERO);
 	    
-	    cusparseXcoo2csr(handle, AColCooPtr, nnzA, pixelCount, A_tRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
+	    //Get matrix A in CSR format on the GPU
+	    Pointer ARowCooPtr = new Pointer(); //allocate pointers for GPU memory
+	    Pointer ARowCSRPtr = new Pointer(); //hold rows for Coo and CSR representations
+	    
+	    cudaMalloc(ARowCooPtr, nnzA*Sizeof.INT); //allocate memory on GPU
+	    cudaMalloc(ARowCSRPtr, (nnzA+1)*Sizeof.INT);
+	    //copy COO representation into GPU memory
+	    cudaMemcpy(ARowCooPtr, Pointer.to(ARowCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice); 
+	    //convert COO representation into CSR representation
+	    cusparseXcoo2csr(handle, ARowCooPtr, nnzA, nnzA/2, ARowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
+	    
+	    AColCSR = AColCoo; //CSR of col is same as COO
+	    AValCSR = AValCoo; //CSR of val is same as COO
+	    //Garbage collection stuff
+	    cudaFree(ARowCooPtr);
+	    
+	    
+	    //Get matrix A^T in CSR format on the GPU
+	    Pointer A_tRowCooPtr = new Pointer();
+	    Pointer A_tRowCSRPtr = new Pointer();
+	    //allocate memory on GPU
+	    cudaMalloc(A_tRowCooPtr, nnzA*Sizeof.INT);
+	    cudaMalloc(A_tRowCSRPtr, (nnzA+1)*Sizeof.INT);
+	    //copy COO into GPU memory
+	    cudaMemcpy(A_tRowCooPtr, Pointer.to(AColCoo), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
+	    //convert to csr format
+	    cusparseXcoo2csr(handle, A_tRowCooPtr, nnzA, nnzA/2, A_tRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    A_tColCSR = ARowCoo;
 	    A_tValCSR = AValCoo;
-	    cudaMemcpy(A_tColCSRPtr, Pointer.to(A_tColCSR), nnzA*Sizeof.INT, CUSPARSE_INDEX_BASE_ZERO);
-	    cudaMemcpy(A_tValCSRPtr, Pointer.to(A_tValCSR), nnzA*Sizeof.DOUBLE, CUSPARSE_INDEX_BASE_ZERO);
+	    //clean up stuff we dont need anymore
+	    ARowCoo = null;
+	    AColCoo = null;
+	    AValCoo = null;
+	    cudaFree(A_tRowCooPtr);
 	    
-	    cusparseXcoo2csr(handle, CRowCooPtr, nnzC, nnzC, CRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
-	    CColCSR = CColCoo;
-	    CValCSR = CValCoo;
-	    cudaMemcpy(CColCSRPtr, Pointer.to(CColCSR), nnzC*Sizeof.INT, CUSPARSE_INDEX_BASE_ZERO);
-	    cudaMemcpy(CValCSRPtr, Pointer.to(CValCSR), nnzC*Sizeof.DOUBLE, CUSPARSE_INDEX_BASE_ZERO);
+	    
+	    //Get matrix C in CSR format on the GPU
+	    Pointer CRowCooPtr = new Pointer(); //allocate pointers for GPU memory
+	    Pointer CRowCSRPtr = new Pointer();
+	    
+	    cudaMalloc(CRowCooPtr, nnzC*Sizeof.INT); //allocate memory on GPU
+	    cudaMalloc(CRowCSRPtr, (nnzC+1)*Sizeof.INT);
+	    //Copy COO representation into GPU memory
+	    cudaMemcpy(CRowCooPtr, Pointer.to(CRowCoo), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
+	    //convert COO representation into CSR representation
+	    cusparseXcoo2csr(handle, CRowCooPtr, nnzC, nnzC/2, CRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
+	    
+	    CColCSR = CColCoo; //CSR Col is same as COO
+	    CValCSR = CValCoo; //CSR val is same as COO
+	    //garbage collection stuff
+	    CColCoo = null; //null it to save memory
+	    CValCoo = null; //null it to save memory
+	    CRowCoo = null; //null it to save memory
+	    cudaFree(CRowCooPtr); //free up the COO memory
 	    
 	    JCuda.cudaDeviceSynchronize();
 	    
-	    System.out.println();
-	    for (int i = 0; i < nnzA; i++) {
-	    	System.out.print(ARowCoo[i] + ", ");
-	    }
-	    System.out.println();
-	    for (int i = 0; i < nnzA+1; i++) {
-	    	System.out.print(ARowCSR[i] + ", ");
-	    }
-	    
-	    
-	    
-	    cudaFree(ARowCooPtr);
-	    cudaFree(AColCooPtr);
-	    cudaFree(AValCooPtr);
-	    
-	    cudaFree(ARowCSRPtr);
-	    cudaFree(AColCSRPtr);
-	    cudaFree(AValCSRPtr);
-	    
-	    cudaFree(A_tRowCSRPtr);
-	    cudaFree(A_tColCSRPtr);
-	    cudaFree(A_tValCSRPtr);
-	    
-	    cudaFree(CRowCooPtr);
-	    cudaFree(CColCooPtr);
-	    cudaFree(CValCooPtr);
+	    cudaMemcpy(Pointer.to(ARowCSR), ARowCSRPtr, (nnzA+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(A_tRowCSR), A_tRowCSRPtr, (nnzA+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(CRowCSR), CRowCSRPtr, (nnzC+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
 	   
-	    cudaFree(CRowCSRPtr);
-	    cudaFree(CColCSRPtr);
-	    cudaFree(CValCSRPtr);
+	    for (int i = 0; i < nnzC; i++) {
+	    	out = String.format("A:%d, A^T:%d, C:%d", ARowCSR[i], A_tRowCSR[i], CRowCSR[i]);
+	    	System.out.println(out);
+	    }
 	    
 	    cusparseDestroy(handle);
 	    
