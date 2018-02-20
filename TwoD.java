@@ -13,6 +13,7 @@ import static jcuda.runtime.cudaMemcpyKind.*;
 import static jcuda.jcusparse.JCusparse.*;
 import static jcuda.jcusparse.cusparseIndexBase.CUSPARSE_INDEX_BASE_ZERO;
 import static jcuda.jcusparse.cusparseMatrixType.CUSPARSE_MATRIX_TYPE_GENERAL;
+import static jcuda.jcusparse.cusparseOperation.*;
 import static jcuda.runtime.JCuda.*;
 
 
@@ -86,6 +87,8 @@ public class TwoD {
 	    cusparseMatDescr descrA = new cusparseMatDescr();
 	    cusparseMatDescr descrA_t = new cusparseMatDescr();
 	    cusparseMatDescr descrC = new cusparseMatDescr();
+	    cusparseMatDescr descrA_tC = new cusparseMatDescr();
+	    cusparseMatDescr descrLap = new cusparseMatDescr();
 	        
 	    
 	    int pixel[] = new int[pixelCount]; //array of pixels, numbered l-r t-b
@@ -150,6 +153,8 @@ public class TwoD {
 	    cusparseCreateMatDescr(descrA);
 	    cusparseCreateMatDescr(descrA_t);
 	    cusparseCreateMatDescr(descrC);
+	    cusparseCreateMatDescr(descrA_tC);
+	    cusparseCreateMatDescr(descrLap);
 	    cusparseSetMatType(descrA, CUSPARSE_MATRIX_TYPE_GENERAL);
 	    cusparseSetMatType(descrA_t, CUSPARSE_MATRIX_TYPE_GENERAL);
 	    cusparseSetMatType(descrC, CUSPARSE_MATRIX_TYPE_GENERAL);
@@ -214,7 +219,7 @@ public class TwoD {
 	    cudaFree(CRowCooPtr); //free up the COO memory
 	    
 	    JCuda.cudaDeviceSynchronize();
-	    
+	    //debug stuff rn
 	    cudaMemcpy(Pointer.to(ARowCSR), ARowCSRPtr, (nnzA+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
 	    cudaMemcpy(Pointer.to(A_tRowCSR), A_tRowCSRPtr, (nnzA+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
 	    cudaMemcpy(Pointer.to(CRowCSR), CRowCSRPtr, (nnzC+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
@@ -223,6 +228,68 @@ public class TwoD {
 	    	out = String.format("A:%d, A^T:%d, C:%d", ARowCSR[i], A_tRowCSR[i], CRowCSR[i]);
 	    	System.out.println(out);
 	    }
+	    
+	    Pointer AColCSRPtr = new Pointer(); //create column and value pointers on device memory
+	    Pointer AValCSRPtr = new Pointer();
+	    
+	    cudaMalloc(AColCSRPtr, nnzA*Sizeof.INT); //allocate memory
+	    cudaMalloc(AValCSRPtr, nnzA*Sizeof.DOUBLE);
+	    
+	    cudaMemcpy(AColCSRPtr, Pointer.to(AColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice); //copy values in to memory
+	    cudaMemcpy(AValCSRPtr, Pointer.to(AValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);  
+	    
+	    
+	    Pointer A_tColCSRPtr = new Pointer();
+	    Pointer A_tValCSRPtr = new Pointer();
+	    
+	    cudaMalloc(A_tColCSRPtr, nnzA*Sizeof.INT);
+	    cudaMalloc(A_tValCSRPtr, nnzA*Sizeof.DOUBLE);
+	    
+	    cudaMemcpy(A_tColCSRPtr, Pointer.to(A_tColCSR), nnzA*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(A_tValCSRPtr, Pointer.to(A_tValCSR), nnzA*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    
+	    
+	    Pointer CColCSRPtr = new Pointer();
+	    Pointer CValCSRPtr = new Pointer();
+	    
+	    cudaMalloc(CColCSRPtr, nnzC*Sizeof.INT);
+	    cudaMalloc(CValCSRPtr, nnzC*Sizeof.DOUBLE);
+	    
+	    cudaMemcpy(CColCSRPtr, Pointer.to(CColCSR), nnzC*Sizeof.INT, cudaMemcpyHostToDevice);
+	    cudaMemcpy(CValCSRPtr, Pointer.to(CValCSR), nnzC*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    
+	    //perform first half of Laplacian calculation (A^t*C)
+	    Pointer A_tCRowCSRPtr = new Pointer(); //allocate pointers for intermediate results
+	    Pointer A_tCColCSRPtr = new Pointer();
+	    Pointer A_tCValCSRPtr = new Pointer();
+	    Pointer nnzA_tCPtr = new Pointer(); //pointer for nonzero elements
+	    cudaMalloc(nnzA_tCPtr, Sizeof.INT); //allocate memory for nonzero elements
+	    int nnzA_tC[] = new int[1]; //make it an array (just so we can copy back into it easier)
+	    
+	    int m,n,k; //A^T is mxk matrix, C is kxn matrix, A is kxm matrix
+	    m = pixelCount; //values for m,n,k
+	    k = edgeCount;
+	    n = edgeCount;
+	    //http://docs.nvidia.com/cuda/cusparse/index.html#cusparse-lt-t-gt-csrgemm 
+	    //documentation for this section (shows how to use these methods)
+	    cudaMalloc(A_tCRowCSRPtr, (m+1)*Sizeof.INT); //allocate memory for row pointer
+	    //find row values and nnz for intermediate result
+	    cusparseXcsrgemmNnz(handle, CUSPARSE_OPERATION_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrA, nnzA, ARowCSRPtr, AColCSRPtr, descrC, nnzC, CRowCSRPtr, CColCSRPtr, descrA_tC, A_tCRowCSRPtr, nnzA_tCPtr);
+	    //copy nnz back to allocate memory for col and val pointers
+	    cudaMemcpy(Pointer.to(nnzA_tC), nnzA_tCPtr, Sizeof.INT, cudaMemcpyDeviceToHost);
+	    //allocate memory
+	    cudaMalloc(A_tCColCSRPtr, nnzA_tC[0]*Sizeof.INT);
+	    cudaMalloc(A_tCValCSRPtr, nnzA_tC[0]*Sizeof.DOUBLE);
+	    //perform second part of matrix multiplication
+	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrA, nnzA, AValCSRPtr, ARowCSRPtr, AColCSRPtr, descrC, nnzC, CValCSRPtr, CRowCSRPtr, CColCSRPtr, descrA_tC, A_tCValCSRPtr, A_tCRowCSRPtr, A_tCColCSRPtr);
+	    
+	    
+	    Pointer LapRowCSRPtr = new Pointer();
+	    Pointer LapColCSRPtr = new Pointer();
+	    Pointer LapValCSRPtr = new Pointer();
+	    int nnzLap;
+	    
+	    
 	    
 	    cusparseDestroy(handle);
 	    
