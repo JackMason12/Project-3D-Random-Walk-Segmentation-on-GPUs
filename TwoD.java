@@ -287,8 +287,28 @@ public class TwoD {
 	    Pointer LapRowCSRPtr = new Pointer();
 	    Pointer LapColCSRPtr = new Pointer();
 	    Pointer LapValCSRPtr = new Pointer();
-	    int nnzLap;
+	    Pointer nnzLapPtr = new Pointer();
+	    cudaMalloc(nnzLapPtr, Sizeof.INT);
+	    int nnzLap[] = new int[1];
 	    
+	    //A^T*C is a mxk matrix, A is kxn matrix
+	    m = pixelCount;
+	    k = edgeCount;
+	    n = pixelCount;
+	    
+	    cudaMalloc(LapRowCSRPtr, (m+1)*Sizeof.INT); 
+	    
+	    cusparseXcsrgemmNnz(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrA_tC, nnzA_tC[0], A_tCRowCSRPtr, A_tCColCSRPtr, descrA, nnzA, ARowCSRPtr, AColCSRPtr, descrLap, LapRowCSRPtr, nnzLapPtr);
+	    
+	    cudaMemcpy(Pointer.to(nnzLap), nnzLapPtr, Sizeof.INT, cudaMemcpyDeviceToHost);
+	    
+	    cudaMalloc(LapColCSRPtr, nnzLap[0]*Sizeof.INT);
+	    cudaMalloc(LapValCSRPtr, nnzLap[0]*Sizeof.DOUBLE);
+	    
+	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrA_tC, nnzA_tC[0], A_tCValCSRPtr, A_tCRowCSRPtr, A_tCColCSRPtr, descrA, nnzA, AValCSRPtr, ARowCSRPtr, AColCSRPtr, descrLap, LapValCSRPtr, LapRowCSRPtr, LapColCSRPtr);
+	    
+	    //form linear system and solve using cusparseDcsrsm_solve() 
+	    //http://docs.nvidia.com/cuda/cusparse/index.html#cusparse-lt-t-gt-csrsmsolve
 	    
 	    
 	    cusparseDestroy(handle);
