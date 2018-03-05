@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcublas-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcublas-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcuda-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcuda-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcufft-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcufft-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcurand-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcurand-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcusolver-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcusolver-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcusparse-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jcusparse-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jnvgraph-0.8.0.jar"/>
+	<classpathentry kind="lib" path="D:/Work/Project/Project/src/jnvgraph-natives-0.8.0-windows-x86_64.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
