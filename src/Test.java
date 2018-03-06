@@ -8,7 +8,6 @@ import javax.imageio.ImageIO;
 public class Test {
 
 	public static void main(String[] args){
-		// TODO Auto-generated method stub
 		BufferedImage image = null;
 		System.out.print("Enter image path: ");
 		try { //read in image
@@ -27,7 +26,7 @@ public class Test {
 	    int edgeCount = (width*(height-1))+(height*(width-1)); //compute number of edges
 	    int pixel[] = new int[pixelCount]; //array of pixels, numbered l-r t-b
 	    Edge edge[] = new Edge[edgeCount]; //array of edges, numbered horizontally l-r followed by vertically t-b
-	    double beta = (double) 1.5;
+	    double beta =  0.5;
 	    
 	    int labels[] = new int[] {0,0,0,1,1,0,0,1,1,1};
 	    int seeds[] = new int[] {0, 1, 10, 3, 4, 11, 20, 5, 6, 7};
@@ -55,7 +54,7 @@ public class Test {
 	      }
 	    }
 		double proba[][] = RandomWalkSegmentationGPU.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, labels);
-
+		//double proba[][] = fix.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, 10, labels, 2);
 	}
 
 }

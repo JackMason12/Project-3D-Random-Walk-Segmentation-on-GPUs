@@ -86,11 +86,11 @@ public class RandomWalkSegmentationGPU {
 	    int AEntries = 0;
 	    
 	    for (int i = 0; i < edgeCount; i++) { //for each edge
-	    	ARowCoo[AEntries] = edges[i].start;
-	    	AColCoo[AEntries] = i;
+	    	ARowCoo[AEntries] = i;
+	    	AColCoo[AEntries] = edges[i].start;
 	    	AValCoo[AEntries++] = -1; //assign edge an orientation -1 in source, +1 in dest
-	    	ARowCoo[AEntries] = edges[i].end;
-	    	AColCoo[AEntries] = i;
+	    	ARowCoo[AEntries] = i;
+	    	AColCoo[AEntries] = edges[i].end;
 	    	AValCoo[AEntries++] = 1;
 	    }
 	    
@@ -314,6 +314,7 @@ public class RandomWalkSegmentationGPU {
 	    	LbRowCoo.add(LapRowCoo[i]);
 	    	LbColCoo.add(LapColCoo[i]);
 	    	LbValCoo.add(LapValCoo[i]);	    	
+	    	if (LapValCoo[i] != (double) 0) System.out.printf("Row: %d, Col: %d, Val: %f\n", LapRowCoo[i], LapColCoo[i], LapValCoo[i]);
 	    }
 	    System.out.println("ArrayLists populated");
 	     
@@ -535,6 +536,13 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(LbColCSRPtr);
 	    cudaFree(LbValCSRPtr);
 	    
+	    double rhssparse[] = new double[nnzRHS[0]];
+	    cudaMemcpy(Pointer.to(rhssparse), RHSValCSRPtr, nnzRHS[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    for (int i = 0; i < nnzRHS[0]; i++) {
+	    	System.out.printf("rhssparse: %d, %f\n", i, rhssparse[i]);
+	    }
+	    
+	    
 	    System.out.println("RHS calculated and assigned on gpu");
 	    
 	    //eq will be Lu*X=-Lb*Bound where bound is a seedcount*labelcount matrix, where an entry is 1 if that seed (row) has the same label as the col
@@ -579,6 +587,16 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(LuRowCooPtr);
 	    
 	    System.out.println("Lu calculated and assigned on gpu");
+	    
+	    /*
+	     * TESTING::::
+	     *
+	     */
+	    /*double rhs[] = new double[m*n];
+	    cudaMemcpy(Pointer.to(rhs), RHSDensePtr, m*n*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    for (int i = 0; i < m*n; i++) {
+	    	System.out.printf("RHS: %d, %f\n", i, rhs[i]);
+	    }*/
 	    
 	    /*
 	     * Set up and perform solving
