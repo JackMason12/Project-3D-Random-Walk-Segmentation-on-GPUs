@@ -66,6 +66,27 @@ public class RandomWalkSegmentationGPU {
 	    //convert row to CSR representation
 	    cusparseXcoo2csr(handle, CRowCooPtr, nnzC, nnzC, CRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    JCuda.cudaDeviceSynchronize();
+	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    int printRow[] = new int[nnzC];
+	    int printCol[] = new int[nnzC];
+	    double printVal[] = new double[nnzC];
+	    
+	    cudaMemcpy(Pointer.to(printRow), CRowCooPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), CColCSRPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), CValCSRPtr, nnzC*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix C: %d entries\n", nnzC);
+	    
+	    for (int i = 0; i < nnzC; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+
 	    //free up coo representation of row
 	    cudaFree(CRowCooPtr);
 		
@@ -114,7 +135,30 @@ public class RandomWalkSegmentationGPU {
 	    //convert row representation to CSR
 	    cusparseXcoo2csr(handle, ARowCooPtr, nnzA, edgeCount, ARowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    JCuda.cudaDeviceSynchronize();
+	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzA];
+	    printCol = new int[nnzA];
+	    printVal = new double[nnzA];
+	    
+	    cudaMemcpy(Pointer.to(printRow), ARowCooPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), AColCSRPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), AValCSRPtr, nnzA*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix A: %d entries\n", nnzA);
+	    
+	    for (int i = 0; i < nnzA; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
+	    
 	    //free up row coo memory
+
 		cudaFree(ARowCooPtr);
 		
 		/*
@@ -183,7 +227,7 @@ public class RandomWalkSegmentationGPU {
 	    //copy nnz back to host memory
 	    cudaMemcpy(Pointer.to(nnzAtC), nnzAtCPtr, Sizeof.INT, cudaMemcpyDeviceToHost);
 	    
-	    System.out.printf("nnzAtC: %d\n", nnzAtC[0]);
+	    //System.out.printf("nnzAtC: %d\n", nnzAtC[0]);
 	    
 	    cudaFree(nnzAtCPtr);
 	    
@@ -200,7 +244,30 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(CColCSRPtr);
 	    cudaFree(CValCSRPtr);
 	    
-	    System.out.println("A^T*C calculated");
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzAtC[0]];
+	    printCol = new int[nnzAtC[0]];
+	    printVal = new double[nnzAtC[0]];
+	    
+	    Pointer AtCRowCooPtr = new Pointer();
+	    cudaMalloc(AtCRowCooPtr, nnzAtC[0]*Sizeof.INT);
+	    cusparseXcsr2coo(handle, AtCRowCSRPtr, nnzAtC[0], m, AtCRowCooPtr, CUSPARSE_INDEX_BASE_ZERO);
+	    cudaMemcpy(Pointer.to(printRow), AtCRowCooPtr, nnzAtC[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), AtCColCSRPtr, nnzAtC[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), AtCValCSRPtr, nnzAtC[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix AtC: %d entries\n", nnzAtC[0]);
+	    
+	    for (int i = 0; i < nnzAtC[0]; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
+	    //System.out.println("A^T*C calculated");
 	    
 	    /*
 	     * Perform second half of laplacian calculation (A^T*C*A)
@@ -233,7 +300,7 @@ public class RandomWalkSegmentationGPU {
 	    //copy nnz lap back to host mem
 	    cudaMemcpy(Pointer.to(nnzLap), nnzLapPtr, Sizeof.INT, cudaMemcpyDeviceToHost);
 	    
-	    System.out.printf("nnzLap : %d\n", nnzLap[0]);
+	    //System.out.printf("nnzLap : %d\n", nnzLap[0]);
 	    
 	    //free nnzLapPtr
 	    cudaFree(nnzLapPtr);
@@ -254,7 +321,30 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(AColCSRPtr);
 	    cudaFree(AValCSRPtr);
 	    
-	    System.out.println("Laplacian calculated");
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzLap[0]];
+	    printCol = new int[nnzLap[0]];
+	    printVal = new double[nnzLap[0]];
+	    
+	    Pointer LapRowCooPtr1 = new Pointer();
+	    cudaMalloc(LapRowCooPtr1, nnzLap[0]*Sizeof.INT);
+	    cusparseXcsr2coo(handle, LapRowCSRPtr, nnzLap[0], m, LapRowCooPtr1, CUSPARSE_INDEX_BASE_ZERO);
+	    cudaMemcpy(Pointer.to(printRow), LapRowCooPtr1, nnzLap[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), LapColCSRPtr, nnzLap[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), LapValCSRPtr, nnzLap[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix Lap: %d entries\n", nnzLap[0]);
+	    
+	    for (int i = 0; i < nnzLap[0]; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
+	   // System.out.println("Laplacian calculated");
 	    
 	    /*
 	     * To figure out the RHS of the equation, and the LHS (just unseeded part of laplacian)
@@ -285,7 +375,7 @@ public class RandomWalkSegmentationGPU {
 	    cudaMemcpy(Pointer.to(LapRowCoo), LapRowCooPtr, nnzLap[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
 	    cudaMemcpy(Pointer.to(LapValCoo), LapValCSRPtr, nnzLap[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
 	    	    
-	    System.out.println("Laplacian converted back to COO");
+	    //System.out.println("Laplacian converted back to COO");
 	    //free: LapRowCooPtr, LapRowCSRPtr, LapColCSRPtr, LapValCSRPtr
 	    cudaFree(LapRowCooPtr);
 	    cudaFree(LapRowCSRPtr);
@@ -305,7 +395,7 @@ public class RandomWalkSegmentationGPU {
 	    ArrayList<Integer> LbRowCoo = new ArrayList<Integer>(); //coo for Lb (part of RHS of eq)
 	    ArrayList<Integer> LbColCoo = new ArrayList<Integer>();
 	    ArrayList<Double> LbValCoo = new ArrayList<Double>();
-	    System.out.println("ArrayLists created");
+	    //System.out.println("ArrayLists created");
 	    
 	    for (int i = 0; i < nnzLap[0]; i++) { //populate array lists
 	    	LuRowCoo.add(LapRowCoo[i]); //pls give better solution
@@ -314,45 +404,69 @@ public class RandomWalkSegmentationGPU {
 	    	LbRowCoo.add(LapRowCoo[i]);
 	    	LbColCoo.add(LapColCoo[i]);
 	    	LbValCoo.add(LapValCoo[i]);	    	
-	    	if (LapValCoo[i] != (double) 0) System.out.printf("Row: %d, Col: %d, Val: %f\n", LapRowCoo[i], LapColCoo[i], LapValCoo[i]);
+	    	//if (LapValCoo[i] != (double) 0) System.out.printf("Row: %d, Col: %d, Val: %f\n", LapRowCoo[i], LapColCoo[i], LapValCoo[i]);
 	    }
-	    System.out.println("ArrayLists populated");
+	   // System.out.println("ArrayLists populated");
 	     
 	    int ix; //index
 	    int nnzLu = nnzLap[0]; //num nonzero for Lu and Lb
 	    int nnzLb = nnzLap[0];
 	    
-	    for (int i = 0; i < num_seeds; i++) { //remove seed rows and cols to get unseeded part of laplacian for problem
-	    	ix = LuRowCoo.indexOf(seeds[i]); //Lu
-	    	while (ix != -1) {
-	    		LuRowCoo.remove(ix);
-	    		LuColCoo.remove(ix);
-	    		LuValCoo.remove(ix);	  
-	    		nnzLu--;
-	    		ix = LuRowCoo.indexOf(seeds[i]);
-	    	}
-	    	ix = LuColCoo.indexOf(seeds[i]);
-	    	while (ix != -1) {
+	    int cur;
+	    int seeds_temp[] = seeds.clone(); //get copy of seeds (we modify during these methods)
+	    
+	    for (int i = 0; i < num_seeds; i++) { //for each seed
+	    	ix = LuRowCoo.indexOf(seeds_temp[i]);
+	    	while (ix != -1) { //remove seed rows
 	    		LuRowCoo.remove(ix);
 	    		LuColCoo.remove(ix);
 	    		LuValCoo.remove(ix);
 	    		nnzLu--;
-	    		ix = LuColCoo.indexOf(seeds[i]);
+	    		ix = LuRowCoo.indexOf(seeds_temp[i]);
+	    	}
+	    	for (int j = 0; j < LuRowCoo.size(); j++) { //subtract 1 from every row index above it (as it has been removed)
+	    		cur = LuRowCoo.get(j);
+	    		if (cur > seeds_temp[i]) {
+	    			LuRowCoo.set(j, cur-1);
+	    		}
+	    	}
+	    	for (int j = 0; j < seeds.length; j++) { //subtract 1 from every seed above it (corresponds to row movement)
+	    		if (seeds_temp[j]>seeds_temp[i]) {
+	    			seeds_temp[j]--;
+	    		}
 	    	}
 	    }
-	    
-	    Integer LuRowCooArrTemp[] = LuRowCoo.toArray(new Integer[nnzLu]); //get back into arrays
-	    Integer LuColCooArrTemp[] = LuColCoo.toArray(new Integer[nnzLu]);
-	    Double LuValCooArrTemp[] = LuValCoo.toArray(new Double[nnzLu]);
+	    seeds_temp = seeds.clone();
+	    for (int i = 0; i < num_seeds; i++) { //for each seed
+	    	ix = LuColCoo.indexOf(seeds_temp[i]);
+	    	while (ix != -1) { //remove seed cols
+	    		LuRowCoo.remove(ix);
+	    		LuColCoo.remove(ix);
+	    		LuValCoo.remove(ix);
+	    		nnzLu--;
+	    		ix = LuColCoo.indexOf(seeds_temp[i]);
+	    	}
+	    	for (int j = 0; j < LuColCoo.size(); j++)  { //subtract 1 from every column index above it (as the row beneath has been removed)
+	    		cur = LuColCoo.get(j);
+	    		if (cur > seeds_temp[i]) {
+	    			LuColCoo.set(j, cur-1);
+	    		}
+	    	}
+	    	for (int j = 0; j < seeds.length; j++) { //subtract 1 from every seed above it (corresponds to column movement)
+	    		if (seeds_temp[j] > seeds_temp[i]) {
+	    			seeds_temp[j]--;
+	    		}
+	    	}
+	    }
 	    
 	    int LuRowCooArr[] = new int[nnzLu]; //put back in to proper primitive types
 	    int LuColCooArr[] = new int[nnzLu];
 	    double LuValCooArr[] = new double[nnzLu];
 	    
 	    for (int i = 0; i < nnzLu; i++) {
-	    	LuRowCooArr[i] = LuRowCooArrTemp[i];
-	    	LuColCooArr[i] = LuColCooArrTemp[i];
-	    	LuValCooArr[i] = LuValCooArrTemp[i].doubleValue();
+	    	LuRowCooArr[i] = LuRowCoo.get(i);
+	    	LuColCooArr[i] = LuRowCoo.get(i);
+	    	LuValCooArr[i] = LuValCoo.get(i);
 	    }
 	    
 	    /*
@@ -364,27 +478,56 @@ public class RandomWalkSegmentationGPU {
 	    for (int i = 0; i < num_seeds; i++) { //get seeds in arraylist
 	    	seed.add(seeds[i]); //just so we get .contains method
 	    }
-	    for (int i = 0; i < pixelCount; i++) { //Lb (boundary values
-	    	if (seed.contains(i)) { //remove seed rows, and unseeded columns
-	    		ix = LbRowCoo.indexOf(i);
-	    		while(ix != -1) {
-	    			LbRowCoo.remove(ix);
-	    			LbColCoo.remove(ix);
-	    			LbValCoo.remove(ix);
-	    			nnzLb--;
-	    			ix = LbRowCoo.indexOf(i);
+	    
+	    seeds_temp = seeds.clone();
+	    for (int i = 0; i < num_seeds; i++) {
+	    	ix = LbRowCoo.indexOf(seeds_temp[i]);
+	    	while (ix != -1) { //remove seed rows
+	    		LbRowCoo.remove(ix);
+	    		LbColCoo.remove(ix);
+	    		LbValCoo.remove(ix);
+	    		nnzLb--;
+	    		ix = LbRowCoo.indexOf(seeds_temp[i]);
+	    	}
+	    	for (int j = 0; j < LbRowCoo.size(); j++) { //subtract 1 from every row index above it (as it has been removed)
+	    		cur = LbRowCoo.get(j);
+	    		if (cur > seeds_temp[i]) {
+	    			LbRowCoo.set(j, cur-1);
 	    		}
-	    	} else {
-	    		ix = LbColCoo.indexOf(i);
-	    		while (ix != -1) {
-	    			LbRowCoo.remove(ix);
-	    			LbColCoo.remove(ix);
-	    			LbValCoo.remove(ix);
-	    			nnzLb--;
-	    			ix = LbColCoo.indexOf(i);
+	    	}
+	    	for (int j = 0; j < seeds.length; j++) { //subtract 1 from every seed above it (corresponds to row movement)
+	    		if (seeds_temp[j]>seeds_temp[i]) {
+	    			seeds_temp[j]--;
 	    		}
 	    	}
 	    }
+	    int unseeded[] = new int[pixelCount-num_seeds];
+	    int index = 0;
+	    for (int i = 0; i < pixelCount; i++) { //populate array of unseeded pixels
+	    	if (!seed.contains(i)) unseeded[index++] = i;
+	    }
+	    for (int i = 0; i < pixelCount-num_seeds; i++) { //remove unseeded columns
+	    	ix = LbColCoo.indexOf(unseeded[i]);
+	    	while (ix != -1) {
+	    		LbRowCoo.remove(ix);
+	    		LbColCoo.remove(ix);
+	    		LbValCoo.remove(ix);
+	    		nnzLb--;
+	    		ix = LbColCoo.indexOf(unseeded[i]);
+	    	}
+	    	for (int j = 0; j < LbColCoo.size(); j++) { //shuffle down column indices
+	    		cur = LbColCoo.get(j);
+	    		if (cur > unseeded[i]) {
+	    			LbColCoo.set(j, cur-1);
+	    		}
+	    	}
+	    	for (int j = 0; j < unseeded.length; j++) { //shuffle down unseeded array
+	    		if (unseeded[j] > unseeded[i]) {
+	    			unseeded[j]--;
+	    		}
+	    	}
+	    }
+	   
 	    
 	    /*
 	     * create matrix b (second half of RHS)
@@ -394,10 +537,12 @@ public class RandomWalkSegmentationGPU {
 	    
 	    m = num_seeds; //num rows of b
 	    n = num_labels; //num cols of b
+
+	    int nnzB = num_seeds; //num non zero elements
 	    
-	    int bRowCoo[] = new int[m]; //arrays to hold b in coo format
-	    int bColCoo[] = new int[m];
-	    double bValCoo[] = new double[m];
+	    int bRowCoo[] = new int[nnzB]; //arrays to hold b in coo format
+	    int bColCoo[] = new int[nnzB];
+	    double bValCoo[] = new double[nnzB];
 	    
 	    for (int i = 0; i < num_seeds; i++) { //set up b
 	    	bRowCoo[i] = i;
@@ -409,17 +554,14 @@ public class RandomWalkSegmentationGPU {
 	     * Perform multiplication -Lb*b on GPU
 	     * http://docs.nvidia.com/cuda/cusparse/index.html#cusparse-lt-t-gt-csrgemm
 	     */
-	    
-	    Integer LbRowCooArrTemp[] = LbRowCoo.toArray(new Integer[nnzLb]); //set up boundary value laplacian
-	    Integer LbColCooArrTemp[] = LbColCoo.toArray(new Integer[nnzLb]);
-	    Double LbValCooArrTemp[] = LbValCoo.toArray(new Double[nnzLb]);
+	   
 	    int LbRowCooArr[] = new int[nnzLb];
 	    int LbColCooArr[] = new int[nnzLb];
 	    double LbValCooArr[] = new double[nnzLb];
 	    for (int i = 0; i < nnzLb; i++) {
-	    	LbRowCooArr[i] = LbRowCooArrTemp[i]; 
-	    	LbColCooArr[i] = LbColCooArrTemp[i];
-	    	LbValCooArr[i] = -LbValCooArrTemp[i].doubleValue();//value is neg because we want -Lb*b
+	    	LbRowCooArr[i] = LbRowCoo.get(i); 
+	    	LbColCooArr[i] = LbColCoo.get(i);
+	    	LbValCooArr[i] = -LbValCoo.get(i);//value is neg because we want -Lb*b
 	    }
 	    
 	    /*
@@ -433,10 +575,9 @@ public class RandomWalkSegmentationGPU {
 	    Pointer bColCSRPtr = new Pointer();
 	    Pointer bValCSRPtr = new Pointer();
 	    
-	    int nnzB = num_seeds; //num non zero elements
 	    
 	    cudaMalloc(bRowCooPtr, nnzB*Sizeof.INT); //allocate memory for pointers
-	    cudaMalloc(bRowCSRPtr, (pixelCount-num_seeds+1)*Sizeof.INT);
+	    cudaMalloc(bRowCSRPtr, (num_seeds+1)*Sizeof.INT);
 	    cudaMalloc(bColCSRPtr, nnzB*Sizeof.INT);
 	    cudaMalloc(bValCSRPtr, nnzB*Sizeof.DOUBLE);
 	    
@@ -446,10 +587,32 @@ public class RandomWalkSegmentationGPU {
 	    
 	    cusparseXcoo2csr(handle, bRowCooPtr, nnzB, nnzB, bRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert COO row representation to CSR (for multiplication later)
 	    JCuda.cudaDeviceSynchronize(); //sync up
+	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzB];
+	    printCol = new int[nnzB];
+	    printVal = new double[nnzB];
+	    
+	    cudaMemcpy(Pointer.to(printRow), bRowCooPtr, nnzB*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), bColCSRPtr, nnzB*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), bValCSRPtr, nnzB*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix b: %d entries\n", nnzB);
+	    
+	    for (int i = 0; i < nnzB; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
+	    
 	    cudaFree(bRowCooPtr);//free up unneeded memory
 
 	    
-	    System.out.println("b calculated and assigned on gpu");
+	    //System.out.println("b calculated and assigned on gpu");
 	    
 	    /*
 	     * convert matrix Lb to CSR representation and allocate on GPU
@@ -475,24 +638,36 @@ public class RandomWalkSegmentationGPU {
 	    
 	    cusparseXcoo2csr(handle, LbRowCooPtr, nnzLb, m, LbRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert COO representation into csr representation
 	    JCuda.cudaDeviceSynchronize(); //synchronise
+	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzLb];
+	    printCol = new int[nnzLb];
+	    printVal = new double[nnzLb];
+	    
+	    cudaMemcpy(Pointer.to(printRow), LbRowCooPtr, nnzLb*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), LbColCSRPtr, nnzLb*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), LbValCSRPtr, nnzLb*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix Lb: %d entries\n", nnzLb);
+	    
+	    for (int i = 0; i < nnzLb; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
+	    
 	    cudaFree(LbRowCooPtr);	    
 	    
-	    System.out.println("Lb calculated and assigned on gpu");
+	    //System.out.println("Lb calculated and assigned on gpu");
 	    
 	    /*
 	     * create pointers and matrix descriptions for -Lb*b multiplication
 	     * 
 	     */
-	    
-	    Pointer RHSRowCSRPtr = new Pointer(); //right hand side of problem
-	    Pointer RHSColCSRPtr = new Pointer(); // is -lb*b
-	    Pointer RHSValCSRPtr = new Pointer(); //pointers for right hand side as sparse matrix (use sparse matrix multipication)
-	    Pointer nnzRHSPtr = new Pointer();
-	    
-	    int nnzRHS[] = new int[1];
-	    m = pixelCount - num_seeds; //m,n,k for multiplication -Lb*b
-	    k = num_seeds; //Lb is m*k matrix
-	    n = num_labels; //b is k*n matrix
 	    
 	    cusparseMatDescr descrb = new cusparseMatDescr(); //format descriptions for matrices
 	    cusparseMatDescr descrLb = new cusparseMatDescr();
@@ -514,18 +689,43 @@ public class RandomWalkSegmentationGPU {
 	     * Perform multiplication Lb*b
 	     * http://docs.nvidia.com/cuda/cusparse/index.html#cusparse-lt-t-gt-csrgemm
 	     */
+	    /*
+	     * TODO: THIS IS THE POINT OF ERROR, not sure why at all.
+	     */
+
+	    
+	    Pointer RHSRowCSRPtr = new Pointer(); //right hand side of problem
+	    Pointer RHSColCSRPtr = new Pointer(); // is -lb*b
+	    Pointer RHSValCSRPtr = new Pointer(); //pointers for right hand side as sparse matrix (use sparse matrix multipication)
+	    Pointer nnzRHSPtr = new Pointer();
+	    
+	    int nnzRHS[] = new int[1];
+	    System.out.println(nnzRHS[0]);
+	    m = pixelCount - num_seeds; //m,n,k for multiplication -Lb*b
+	    System.out.println(m);
+	    k = num_seeds; //Lb is m*k matrix
+	    System.out.println(k);
+	    n = num_labels; //b is k*n matrix
+	    System.out.println(n);
 	    
 	    cudaMalloc(RHSRowCSRPtr, (m+1)*Sizeof.INT); //create RHS
 	    cudaMalloc(nnzRHSPtr, Sizeof.INT); //allocate memory for rhs row
 	    
+	    System.out.println(RHSRowCSRPtr.toString());
+	    System.out.println(nnzRHSPtr.toString());
+	    
+	    //just seems to be this line that is the problem
 	    cusparseXcsrgemmNnz(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrLb, nnzLb, LbRowCSRPtr, LbColCSRPtr, descrb, nnzB, bRowCSRPtr, bColCSRPtr, descrRHS, RHSRowCSRPtr, nnzRHSPtr);
 	    JCuda.cudaDeviceSynchronize(); //find nnz for rhs, synchronise
+	    
+	    //or this doesnt function correctly
 	    cudaMemcpy(Pointer.to(nnzRHS), nnzRHSPtr, Sizeof.INT, cudaMemcpyDeviceToHost); //copy nnz back to host
+	    System.out.println(nnzRHSPtr.toString());
 	    cudaFree(nnzRHSPtr);
 	    
 	    cudaMalloc(RHSColCSRPtr, nnzRHS[0]*Sizeof.INT); //allocate memory for col and value pointers
 	    cudaMalloc(RHSValCSRPtr, nnzRHS[0]*Sizeof.DOUBLE);
-	    
+	    JCuda.cudaDeviceSynchronize();
 	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrLb, nnzLb, LbValCSRPtr, LbRowCSRPtr, LbColCSRPtr, descrb, nnzB, bValCSRPtr, bRowCSRPtr, bColCSRPtr, descrRHS, RHSValCSRPtr, RHSRowCSRPtr, RHSColCSRPtr);
 	    JCuda.cudaDeviceSynchronize(); //perform multiplication and synchronise
 	    
@@ -536,14 +736,42 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(LbColCSRPtr);
 	    cudaFree(LbValCSRPtr);
 	    
-	    double rhssparse[] = new double[nnzRHS[0]];
-	    cudaMemcpy(Pointer.to(rhssparse), RHSValCSRPtr, nnzRHS[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
-	    for (int i = 0; i < nnzRHS[0]; i++) {
-	    	System.out.printf("rhssparse: %d, %f\n", i, rhssparse[i]);
+	    /*
+	     * print out CSR representation to check if issue is with conversion (its not)
+	     */
+	    
+	    int print[] = new int[m+1];
+	    cudaMemcpy(Pointer.to(print), RHSRowCSRPtr, (m+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    for (int i = 0; i < m+1; i++) {
+	    	System.out.println(print[i]);
 	    }
+	    	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzRHS[0]];
+	    printCol = new int[nnzRHS[0]];
+	    printVal = new double[nnzRHS[0]];
+	    
+	    Pointer RHSRowCooPtr = new Pointer();
+	    cudaMalloc(RHSRowCooPtr, nnzRHS[0]*Sizeof.INT);
+	    cusparseXcsr2coo(handle, RHSRowCSRPtr, nnzRHS[0], m, RHSRowCooPtr, CUSPARSE_INDEX_BASE_ZERO);
+	    
+	    cudaMemcpy(Pointer.to(printRow), RHSRowCooPtr, nnzRHS[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), RHSColCSRPtr, nnzRHS[0]*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), RHSValCSRPtr, nnzRHS[0]*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix RHS(sparse): %d entries\n", nnzRHS[0]);
+	    
+	    for (int i = 0; i < nnzRHS[0]; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
 	    
 	    
-	    System.out.println("RHS calculated and assigned on gpu");
+	    //System.out.println("RHS calculated and assigned on gpu");
 	    
 	    //eq will be Lu*X=-Lb*Bound where bound is a seedcount*labelcount matrix, where an entry is 1 if that seed (row) has the same label as the col
 	    
@@ -562,6 +790,24 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(RHSRowCSRPtr);
 	    cudaFree(RHSColCSRPtr);
 	    cudaFree(RHSValCSRPtr);
+	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    double printElement[] = new double[m*n];
+
+	    cudaMemcpy(Pointer.to(printElement), RHSDensePtr, m*n*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix RHS(Dense): %d entries\n", printElement.length);
+	    
+	    for (int i = 0; i < n; i++) {
+	    	for (int j = 0; j < m; j++) {
+	    		System.out.printf("El: (%d,%d), Val: %f\n", j, i, printElement[i]);
+	    	}
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
 	    
 	    /*
 	     * Get Lu on the GPU, ready for the solver
@@ -584,9 +830,29 @@ public class RandomWalkSegmentationGPU {
 	    cusparseXcoo2csr(handle, LuRowCooPtr, nnzLu, pixelCount-num_seeds, LuRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert coo representation to csr representation
 	    JCuda.cudaDeviceSynchronize(); //sync up
 	    
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    printRow = new int[nnzLu];
+	    printCol = new int[nnzLu];
+	    printVal = new double[nnzLu];
+	    
+	    cudaMemcpy(Pointer.to(printRow), LuRowCooPtr, nnzLu*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printCol), LuColCSRPtr, nnzLu*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    cudaMemcpy(Pointer.to(printVal), LuValCSRPtr, nnzLu*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    
+	    System.out.printf("Matrix Lu: %d entries\n", nnzLu);
+	    
+	    for (int i = 0; i < nnzLu; i++) {
+	    	System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
+	    }
+	    /*
+	     * Printing stuff for testing!!
+	     */
+	    
 	    cudaFree(LuRowCooPtr);
 	    
-	    System.out.println("Lu calculated and assigned on gpu");
+	    //System.out.println("Lu calculated and assigned on gpu");
 	    
 	    /*
 	     * TESTING::::
@@ -627,12 +893,12 @@ public class RandomWalkSegmentationGPU {
 	    cudaMalloc(ProbPtr, (m*n)*Sizeof.DOUBLE); //allocate memory for results
 	    cusparseSolveAnalysisInfo info = new cusparseSolveAnalysisInfo(); //create solver info
 	    cusparseCreateSolveAnalysisInfo(info); //create on gpu
-	    System.out.println("Starting solve phase");
+	    //System.out.println("Starting solve phase");
 	    cusparseDcsrsm_analysis(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, m, nnzLu, descrLu, LuValCSRPtr, LuRowCSRPtr, LuColCSRPtr, info); //perform analysis phase of solving
 	    JCuda.cudaDeviceSynchronize();   
-	    System.out.println("Analysis complete");
+	    //System.out.println("Analysis complete");
 	    cusparseDcsrsm_solve(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, Pointer.to(alphaArr), descrLu, LuValCSRPtr, LuRowCSRPtr, LuColCSRPtr, info, RHSDensePtr, ldRHS, ProbPtr, m);
-	    System.out.println("Solving complete");
+	    //System.out.println("Solving complete");
 	    cudaMemcpy(Pointer.to(Prob), ProbPtr, m*n*Sizeof.DOUBLE, cudaMemcpyDeviceToHost); //copy results back
 		
 	    
@@ -644,7 +910,7 @@ public class RandomWalkSegmentationGPU {
 	    cusparseDestroy(handle);
 	    
 	    
-	    System.out.println("System solved");
+	    //System.out.println("System solved");
 	    
 	    /*
 	     * Put output from solver into 2d array
@@ -652,7 +918,7 @@ public class RandomWalkSegmentationGPU {
 	     */
 	    
 	    double out[][] = new double[num_labels][m];
-	    System.out.printf("%d\n", Prob.length);
+	    //System.out.printf("%d\n", Prob.length);
 	    for (int i = 0; i < num_labels; i++) { //print out array
 	    	for (int j = 0; j < m; j++) {
 	    		ix = i*m+j;
@@ -690,6 +956,7 @@ public class RandomWalkSegmentationGPU {
 		int blue = (int) Math.pow(color1.getBlue() - color2.getBlue(), 2);
 		int alpha = (int) Math.pow(color1.getAlpha() - color2.getAlpha(), 2);
 		int sum = red+green+blue+alpha;
+		
 		
 		return (double) Math.exp(-(beta*sum));
 		
