@@ -4,6 +4,12 @@ import jcuda.*;
 
 
 public class denseVector {
+	
+	/*
+	 * Written by Till Bretschneider
+	 * Simple storage class for vectors on the GPU
+	 * 
+	 */
 
 	private Pointer v_gpuPtr = new Pointer();
 	private int size;

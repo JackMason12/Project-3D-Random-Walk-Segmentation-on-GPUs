@@ -14,9 +14,22 @@ import javax.swing.JPanel;
 public class Test {
 
 	public static void main(String[] args) throws IOException{
+		
+		/*
+		 * This takes a file from the user and reads it in as the image to be used
+		 * Then takes a list of seeds per label from the user
+		 * Uses these to form the input for segmentation
+		 * Displays the original image, image with seeds marked and the resulting mask for the image
+		 * 
+		 * This only supports 2d images, but the method supports anything (simply takes a list of pixels/edges/seeds)
+		 * just depends on an input method, which creates lists of pixels and edges for the method
+		 * 
+		 */
+		
+		
 		BufferedImage image = null;
 		System.out.print("Enter image path: ");
-		Scanner scanner = new Scanner(System.in);
+		Scanner scanner = new Scanner(System.in); //take image path and read in image
 		try { //read in image
 			//Scanner scanner = new Scanner(System.in);
 			String imgaddress = scanner.nextLine();
@@ -25,8 +38,8 @@ public class Test {
 		
 		} catch (Exception e) {
 			
-		}
-		System.out.println();
+		}		
+		
 		String in = "empty";
 		int curLabel = 0;
 		String[] temp_seeds = {"hi"};
@@ -34,7 +47,7 @@ public class Test {
 		ArrayList<Integer> sds = new ArrayList<Integer>();
 		boolean loop = true;
 		//Scanner scanner = new Scanner(System.in);
-		while (loop) {
+		while (loop) { //read in list of seeds for label id, then increment label id
 			System.out.println("Enter comma seperated seeds for label " + curLabel + ": ");
 			try {
 				//Scanner scanner = new Scanner(System.in);
@@ -50,10 +63,11 @@ public class Test {
 			} catch (Exception e) {
 				
 			}
-			System.out.println(temp_seeds.length);
+			//System.out.println(temp_seeds.length);
 		}
 		scanner.close();
 		//System.out.print("\n");
+		/*
 		for (int i = 0; i < image.getHeight(); i++) {
 			for (int j = 0; j < image.getWidth(); j++) {
 				Color col = new Color(image.getRGB(j, i));
@@ -64,6 +78,9 @@ public class Test {
 			}
 			//System.out.print("\n");
 		}
+		*/
+		
+		//Get some image metadata and create some variables
 		int width = image.getWidth(); //get image width
 		int height = image.getHeight(); //get image height
 		int pixelCount = width*height; //compute number of pixels
@@ -77,6 +94,7 @@ public class Test {
 	    //int labels[] = new int[] {0,1};
 	    //int label_count = 2;
 	    //int seeds[] = new int[] {9900, 99};
+	    //create arrays of labels and seeds from the users inputted seeds earlier
 	    Integer[] labels_temp = labs.toArray(new Integer[labs.size()]);
 	    int[] labels = new int[labels_temp.length];
 	    for (int i = 0; i < labels_temp.length; i++) {
@@ -89,6 +107,8 @@ public class Test {
 	    }
 	    int label_count = curLabel;
 	    
+	    
+	    //Read in pixels
 	    for (int j = 0; j < width; j++) {
 	      for (int i = 0; i < height; i++) {
 	    	  pixel[j*height+i] = image.getRGB(i, j); //read in each pixel (l-r, t-b);
@@ -96,7 +116,7 @@ public class Test {
 	    }
 	    
 	    
-	    int edgeIndex = 0;//read in each edge, left-right
+	    int edgeIndex = 0;//read in each edge, left-right, top-bottom
 	    //horizontal edges
 	    for (int j = 0; j < height; j++) {
 	      for (int i = 0; i < width; i++) {
@@ -111,6 +131,9 @@ public class Test {
 	    	  if (j != height-1) edge[edgeIndex++] = new Edge(j*height + i, (j+1)*height + i);
 	      }
 	    }
+	    
+	    
+	    
 		/*
 		int pixel[] = new int[] {Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE};
 		int pixelCount = 6;
@@ -131,34 +154,40 @@ public class Test {
 		
 		
 		double proba[][] = RandomWalkSegmentationGPU.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, labels);*/
+	    
+	    //get our resulting segmentation and mask
+	    long start_time = System.nanoTime();
 		double proba[][] = RandomWalkSegmentationGPU.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, labels);
-		double probs[][] = MatrixUtils.AddSeeds(proba, seeds, labels);
-		int[][] mask = MatrixUtils.GetMask(probs, height, width, label_count);
+		long end_time = System.nanoTime();
+		long execution_time = (end_time-start_time)/1000000;
+		System.out.println("execution time: " + execution_time + "ms");
+		double probs[][] = MatrixUtils.AddSeeds(proba, seeds, labels); //add seeds back to probabilities
+		int[][] mask = MatrixUtils.GetMask(probs, height, width, label_count); //get mask from probabilities
 		
 		File originalFile = new File("bin/original.jpg");
 		ImageIO.write(image, "jpg", originalFile);
-		BufferedImage maskImage = MatrixUtils.GetMaskImage(mask, label_count);
+		BufferedImage maskImage = MatrixUtils.GetMaskImage(mask, label_count); //get mask and seed images
 		BufferedImage seedImage = MatrixUtils.GetSeedImage(image, seeds, labels);
 		File maskFile = new File("bin/mask.jpg");
 		File seedFile = new File("bin/seed.jpg");
-		ImageIO.write(maskImage, "jpg", maskFile);
+		ImageIO.write(maskImage, "jpg", maskFile); //save all the images
 		ImageIO.write(seedImage, "jpg", seedFile);
 		
-		JFrame maskFrame = new JFrame();
+		JFrame maskFrame = new JFrame(); //display mask image
 		maskFrame.add(new JPanel().add(new JLabel(new ImageIcon(maskImage))));
 		maskFrame.setTitle("Mask");
 		maskFrame.setSize(1280, 720);
 		maskFrame.setVisible(true);
 		maskFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		JFrame originalFrame = new JFrame();
+		JFrame originalFrame = new JFrame(); //display original image
 		originalFrame.add(new JPanel().add(new JLabel(new ImageIcon(image))));
 		originalFrame.setTitle("Original");
 		originalFrame.setSize(1280, 720);
 		originalFrame.setVisible(true);
 		originalFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		JFrame seedFrame = new JFrame();
+		JFrame seedFrame = new JFrame(); //display seed image
 		seedFrame.add(new JPanel().add(new JLabel(new ImageIcon(seedImage))));
 		seedFrame.setTitle("Seeds");
 		seedFrame.setSize(1280, 720);

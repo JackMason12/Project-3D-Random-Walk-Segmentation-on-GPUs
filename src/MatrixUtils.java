@@ -38,7 +38,7 @@ public class MatrixUtils {
 	
 	public static ColorMap cmap;
 	
-	public static String PointerContents(Pointer ptr, int count, boolean i) {		
+	public static String PointerContents(Pointer ptr, int count, boolean i) { //gets the contents of a pointer as a string (used for debugging)
 		if (i) {
 			int[] contents = new int[count];
 			cudaMemcpy(Pointer.to(contents), ptr, count*Sizeof.INT, cudaMemcpyDeviceToHost);	
@@ -60,8 +60,17 @@ public class MatrixUtils {
 		}		
 	}
 	
-	public static double[] LuSolve(cusparseHandle handle, cusparseMatDescr descrA, int m, int n, int nnz, Pointer AcsrRowIndex_gpuPtr, Pointer AcooColIndex_gpuPtr, Pointer AcooVal_gpuPtr,denseVector b_gpuPtr, boolean iLuBiCGStabSolve) {
+	public static double[] LuSolve(cusparseHandle handle, cusparseMatDescr descrA, int m, int n, int nnz, Pointer AcsrRowIndex_gpuPtr, Pointer AcooColIndex_gpuPtr, Pointer AcooVal_gpuPtr, denseVector b_gpuPtr, boolean iLuBiCGStabSolve) {
 
+		// solve A*x = b
+		// b is vector provided
+		// x is output probabilities
+		// A is sparse matrix defined by variables before the b pointer
+		// see paper by Nvidia using cublas1
+		// http://docs.nvidia.com/cuda/incomplete-lu-cholesky/index.html
+		// this was also useful:
+		// //https://www.cfd-online.com/Wiki/Sample_code_for_BiCGSTAB_-_Fortran_90
+		
 		// some useful constants
 		double[] one_host = { 1.f };
 		double[] zero_host = { 0.f };
@@ -495,6 +504,9 @@ public class MatrixUtils {
 	}
 	
 	public static double[][] AddSeeds(double[][] probs, int[] seeds, int[] labels) {
+		/*
+		 * Add the seeds back to the probabilites in the right positions
+		 */
 		int label_count = probs.length; //number of labels
 		int seed_count = seeds.length;
 		int unseeded_count = probs[0].length;
@@ -503,7 +515,7 @@ public class MatrixUtils {
 			for (int j = 0; j < label_count; j++) {
 				if (labels[i] == j) { //if the seed has this label
 					probs_fixed[j][seeds[i]] = 1.0; //we know probability is 1
-					System.out.println("seed entered");
+					//System.out.println("seed entered");
 				} else {
 					probs_fixed[j][seeds[i]] = 0; //otherwise its 0
 				}
@@ -533,6 +545,7 @@ public class MatrixUtils {
 		 * Get a mask with the same dimensions as the image.
 		 * This is obviously temporary, and we would employ a 1d masking solution
 		 * Followed by reshaping to the correct dimensions to allow 3 dimensional support
+		 * As stated a lot, the methods itself is independent of the dimensionality of the input/output
 		 */
 		
 		int[] out_flat = new int[h*w];
@@ -563,6 +576,9 @@ public class MatrixUtils {
 	}
 	
 	public static BufferedImage GetSeedImage(BufferedImage original, int[] seeds, int[] labels) {
+		/*
+		 * gets an image with the seeds marked
+		 */
 		BufferedImage out = original;
 		int x = 0;
 		int y = 0;
@@ -582,6 +598,7 @@ public class MatrixUtils {
 		/*
 		 * Get dimensions of the image to create
 		 * Check that they aren't 0
+		 * Gets an image of the mask
 		 */
 		int h = mask.length;
 		if (h == 0) {

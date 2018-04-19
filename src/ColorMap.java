@@ -3,6 +3,13 @@ import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ColorMap {
+	/*
+	 * Class used to generate colours for mask
+	 * first 3 colours are r,g,b
+	 * any subsequent colours are randomised
+	 * we allocate 1 colour per label
+	 */
+	
 	public int[] map;
 	
 	public ColorMap(int label_count) {
@@ -27,7 +34,8 @@ public class ColorMap {
 				}
 			}
 			if (i >= 3) {
-				while (prevs.contains(rgb)) {
+				while (prevs.contains(rgb)) { //generate a new colour that we havent used before
+					//probably going to be very inefficient if you want like 10million+ labels (please dont)
 					r = ThreadLocalRandom.current().nextInt(0, 256);
 					g = ThreadLocalRandom.current().nextInt(0, 256);
 					b = ThreadLocalRandom.current().nextInt(0, 256);

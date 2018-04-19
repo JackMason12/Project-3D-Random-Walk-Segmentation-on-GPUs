@@ -18,7 +18,7 @@ import static jcuda.runtime.JCuda.*;
 
 public class RandomWalkSegmentationGPU {
 	static double[][] getProbabilities(int[] pixels, int pixelCount, Edge[] edges, int edgeCount, double beta, int[] seeds, int[] labels) {
-	
+		
 		/*
 		 * Some initialisation stuff, as recommended in jcuda tutorials
 		 */
@@ -73,19 +73,19 @@ public class RandomWalkSegmentationGPU {
 	    /*
 	     * Printing stuff for testing!!
 	     */
-	    int printRow[] = new int[nnzC];
-	    int printCol[] = new int[nnzC];
-	    double printVal[] = new double[nnzC];
+	    //int printRow[] = new int[nnzC];
+	    //int printCol[] = new int[nnzC];
+	    //double printVal[] = new double[nnzC];
 	    
-	    cudaMemcpy(Pointer.to(printRow), CRowCooPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(Pointer.to(printCol), CColCSRPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(Pointer.to(printVal), CValCSRPtr, nnzC*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	   // cudaMemcpy(Pointer.to(printRow), CRowCooPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printCol), CColCSRPtr, nnzC*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printVal), CValCSRPtr, nnzC*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
 	    
 	    //System.out.printf("Matrix C: %d entries\n", nnzC);
 	    
-	    for (int i = 0; i < nnzC; i++) {
+	    //for (int i = 0; i < nnzC; i++) {
 	    	//System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
-	    }
+	    //}
 	    /*
 	     * Printing stuff for testing!!
 	     */
@@ -142,19 +142,19 @@ public class RandomWalkSegmentationGPU {
 	    /*
 	     * Printing stuff for testing!!
 	     */
-	    printRow = new int[nnzA];
-	    printCol = new int[nnzA];
-	    printVal = new double[nnzA];
+	    //printRow = new int[nnzA];
+	    //printCol = new int[nnzA];
+	    //printVal = new double[nnzA];
 	    
-	    cudaMemcpy(Pointer.to(printRow), ARowCooPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(Pointer.to(printCol), AColCSRPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
-	    cudaMemcpy(Pointer.to(printVal), AValCSRPtr, nnzA*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printRow), ARowCooPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printCol), AColCSRPtr, nnzA*Sizeof.INT, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printVal), AValCSRPtr, nnzA*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
 	    
 	    //System.out.printf("Matrix A: %d entries\n", nnzA);
 	    
-	    for (int i = 0; i < nnzA; i++) {
+	    //for (int i = 0; i < nnzA; i++) {
 	    	//System.out.printf("Row: %d, Col: %d, Val: %f\n", printRow[i], printCol[i], printVal[i]);
-	    }
+	    //}
 	    /*
 	     * Printing stuff for testing!!
 	     */
@@ -249,7 +249,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    /*
 	     * Printing stuff for testing!!
-	     */
+	     *
 	    printRow = new int[nnzAtC[0]];
 	    printCol = new int[nnzAtC[0]];
 	    printVal = new double[nnzAtC[0]];
@@ -326,7 +326,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    /*
 	     * Printing stuff for testing!!
-	     */
+	     *
 	    printRow = new int[nnzLap[0]];
 	    printCol = new int[nnzLap[0]];
 	    printVal = new double[nnzLap[0]];
@@ -593,7 +593,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    /*
 	     * Printing stuff for testing!!
-	     */
+	     *
 	    printRow = new int[nnzB];
 	    int[] printRowCSR = new int[3];
 	    printCol = new int[nnzB];
@@ -656,7 +656,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    /*
 	     * Printing stuff for testing!!
-	     */
+	     *
 	    printRow = new int[nnzLb];
 	    printCol = new int[nnzLb];
 	    printVal = new double[nnzLb];
@@ -744,9 +744,9 @@ public class RandomWalkSegmentationGPU {
 	    
 	    int print[] = new int[m+1];
 	    cudaMemcpy(Pointer.to(print), RHSRowCSRPtr, (m+1)*Sizeof.INT, cudaMemcpyDeviceToHost);
-	    for (int i = 0; i < m+1; i++) {
+	    //for (int i = 0; i < m+1; i++) {
 	    	//System.out.println(print[i]);
-	    }
+	    //}
 	    	    
 	    /*
 	     * Printing stuff for testing!!
@@ -804,43 +804,43 @@ public class RandomWalkSegmentationGPU {
 	    
 	    //System.out.println("RHS");
 	    
-	    for (int i = 0; i < nnzRHS[0]; i++) {
+	    //for (int i = 0; i < nnzRHS[0]; i++) {
 	    	//System.out.print(RHSRow[i]);
 	    	//System.out.print(" ");
 	    	//System.out.print(RHSCol[i]);
 	    	//System.out.print(" ");
 	    	//System.out.print(RHSVal[i]);
 	    	//System.out.print("\n");	    	
-	    }
+	    //}
 	    
 	    //System.out.print(m);
 	    //System.out.print(" ");
 	    //System.out.print(n);
 	    //System.out.print("\n");
 	    
-	    double[][] data = new double[m][n];
+	    //double[][] data = new double[m][n];
 	    
-	    for (int i = 0; i < nnzRHS[0]; i++) {
-	    	data[RHSRow[i]][RHSCol[i]] = RHSVal[i];
-	    }
+	    //for (int i = 0; i < nnzRHS[0]; i++) {
+	    	//data[RHSRow[i]][RHSCol[i]] = RHSVal[i];
+	    //}
 	    
-	    double[] flattened = new double[m*n];
+	    //double[] flattened = new double[m*n];
 	    //System.out.println(flattened.length);
 	    
-	    ix = 0;
-	    for (int i = 0; i < n; i++) {
-	    	for (int j = 0; j < m; j++) {
+	    //ix = 0;
+	   // for (int i = 0; i < n; i++) {
+	    	//for (int j = 0; j < m; j++) {
 	    		//System.out.println(data[j][i]);
-	    		flattened[ix++] = data[j][i]; //col major flatten the array
-	    	}
-	    }
+	    		//flattened[ix++] = data[j][i]; //col major flatten the array
+	    	//}
+	   // }
 	    
 	    
 	    
 	    
-	    Pointer RHSDensePtr = new Pointer(); //pointer for data of RHS dense matrix
-	    cudaMalloc(RHSDensePtr, m*n*Sizeof.DOUBLE); //mxn matrix
-	    int ldRHS = m; //leading dimension is m
+	    //Pointer RHSDensePtr = new Pointer(); //pointer for data of RHS dense matrix
+	    //cudaMalloc(RHSDensePtr, m*n*Sizeof.DOUBLE); //mxn matrix
+	    //int ldRHS = m; //leading dimension is m
 	    //System.out.println("RHS CSR arrays");
 	    //System.out.println(MatrixUtils.PointerContents(RHSRowCSRPtr, m+1, true));
 	    //System.out.println(MatrixUtils.PointerContents(RHSColCSRPtr, nnzRHS[0], true));
@@ -849,7 +849,7 @@ public class RandomWalkSegmentationGPU {
 	    //cusparseDcsr2dense(handle, m, n, descrRHS, RHSValCSRPtr, RHSRowCSRPtr, RHSColCSRPtr, RHSDensePtr, m);
 	    //JCuda.cudaDeviceSynchronize(); //sync results up
 	    
-	    cudaMemcpy(RHSDensePtr, Pointer.to(flattened), m*n*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
+	    //cudaMemcpy(RHSDensePtr, Pointer.to(flattened), m*n*Sizeof.DOUBLE, cudaMemcpyHostToDevice);
 	    //cudaFree(RHSRowCSRPtr);
 	    //cudaFree(RHSColCSRPtr);
 	    //cudaFree(RHSValCSRPtr);
@@ -857,17 +857,17 @@ public class RandomWalkSegmentationGPU {
 	    /*
 	     * Printing stuff for testing!!
 	     */
-	    double printElement[] = new double[m*n];
+	   // double printElement[] = new double[m*n];
 
-	    cudaMemcpy(Pointer.to(printElement), RHSDensePtr, m*n*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
+	    //cudaMemcpy(Pointer.to(printElement), RHSDensePtr, m*n*Sizeof.DOUBLE, cudaMemcpyDeviceToHost);
 	    
 	    //System.out.printf("Matrix RHS(Dense): %d entries\n", printElement.length);
-	    ix = 0;
-	    for (int i = 0; i < n; i++) {
-	    	for (int j = 0; j < m; j++) {
+	    //ix = 0;
+	    //for (int i = 0; i < n; i++) {
+	    	//for (int j = 0; j < m; j++) {
 	    		//System.out.printf("El: (%d,%d), Val: %f\n", j, i, printElement[ix++]);
-	    	}
-	    }
+	    	//}
+	   //}
 	    /*
 	     * Printing stuff for testing!!
 	     */
@@ -895,7 +895,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    /*
 	     * Printing stuff for testing!!
-	     */
+	     *
 	    printRow = new int[nnzLu];
 	    printCol = new int[nnzLu];
 	    printVal = new double[nnzLu];
@@ -979,7 +979,7 @@ public class RandomWalkSegmentationGPU {
 	    //cudaFree(LuColCSRPtr);
 	    //cudaFree(LuValCSRPtr);
 	    //cudaFree(ProbPtr);
-	    cudaFree(RHSDensePtr);
+	    //cudaFree(RHSDensePtr);
 	    //cusparseDestroy(handle);
 	    
 	    
@@ -989,7 +989,7 @@ public class RandomWalkSegmentationGPU {
 	     * Put output from solver into 2d array
 	     * unseededpixels*labels, each entry has probability of pixel(row) being label(col)
 	     */
-	    System.out.println("Output (X)");
+	    //System.out.println("Output (X)");
 	    
 	    double out[][] = new double[num_labels][m];
 	    /*/System.out.printf("%d\n", Prob.length);
@@ -1007,28 +1007,29 @@ public class RandomWalkSegmentationGPU {
 	    double[][] rhs = new double[n][m];
 	    denseVector[] vects = new denseVector[n];
 	    double[][] solution = new double[n][m];
+	    
 	    for (int i = 0; i < nnzRHS[0]; i++) {
 	    	//System.out.println(RHSVal[i]);
 	    	rhs[RHSCol[i]][RHSRow[i]] = RHSVal[i];
 	    }
 	    for (int i = 0; i < n; i++) {
-	    	vects[i] = new denseVector(rhs[i]);
+	    	vects[i] = new denseVector(rhs[i]); //create a vector for each column of the right hand side of the equation
 	    }
-	    for (int i = 0; i < n; i++) {
+	    for (int i = 0; i < n; i++) { //solve for each column
 	    	//System.out.println(MatrixUtils.PointerContents(vects[i].getPtr(), m, false));
 	    	solution[i] = MatrixUtils.LuSolve(handle, descrLu, m, n, nnzLu, LuRowCSRPtr, LuColCSRPtr, LuValCSRPtr, vects[i], false);
 	    	System.out.println("done");
 	    }
 	    
-	    for (int i = 0; i < n; i++) {
-	    	for (int j = 0; j < m; j++) {
+	    //for (int i = 0; i < n; i++) {
+	    	//for (int j = 0; j < m; j++) {
 	    		//System.out.print(solution[i][j]);
 	    		//System.out.print(" ");
-	    	}
+	    	//}
 	    	//System.out.print("\n");
-	    }
-	    System.out.println("avg weight");
-	    System.out.println(avgweight);
+	    //}
+	    //System.out.println("avg weight");
+	    //System.out.println(avgweight);
 	    
 	    return solution;
 	}
@@ -1049,21 +1050,24 @@ public class RandomWalkSegmentationGPU {
 	
 	public static double weight(int a, int b, double beta) {
 		
+		/*
+		 * Gets the weight of an edge (difference/similarity between two ends
+		 */
+		
 		Color color1 = new Color(a);
 		Color color2 = new Color(b);
 		//System.out.printf("Getting weight between (%d, %d, %d, %d) and (%d, %d, %d, %d)\n",color1.getRed(), color1.getGreen(), color1.getBlue(), color1.getAlpha(), color2.getRed(), color2.getGreen(), color2.getBlue(), color2.getAlpha());
 		//System.out.println("Getting weight between " + color1.toString() + " and " + color2.toString());
 		int red = (int) Math.pow(color1.getRed() - color2.getRed(), 2);
-		//System.out.println(red);
 		int green = (int) Math.pow(color1.getGreen() - color2.getGreen(), 2);
 		int blue = (int) Math.pow(color1.getBlue() - color2.getBlue(), 2);
 		//int alpha = (int) Math.pow(color1.getAlpha() - color2.getAlpha(), 2);
 		int sum = red+green+blue;
 		
-		int tot1 = Math.abs(color1.getRed()) + Math.abs(color1.getGreen()) + Math.abs(color1.getBlue());
-		int tot2 = Math.abs(color2.getRed()) + Math.abs(color2.getGreen()) + Math.abs(color2.getBlue());
-		tot1 /= 3;
-		tot2 /= 3;
+		//int tot1 = Math.abs(color1.getRed()) + Math.abs(color1.getGreen()) + Math.abs(color1.getBlue());
+		//int tot2 = Math.abs(color2.getRed()) + Math.abs(color2.getGreen()) + Math.abs(color2.getBlue());
+		//tot1 /= 3;
+		//tot2 /= 3;
 		//System.out.print("weight ");
 		//System.out.print(Math.exp(-beta*(Math.abs(tot1-tot2)/255)));
 		//System.out.print("\n");
