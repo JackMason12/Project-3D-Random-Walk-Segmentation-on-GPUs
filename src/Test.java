@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -55,8 +54,11 @@ public class Test {
 				if (in.length() == 0) loop = false;
 				temp_seeds = new String[in.split(",").length];
 				temp_seeds = in.split(",");
-				for (String sd : temp_seeds) {
-					labs.add(curLabel);
+				System.out.println(in);
+				for (int i = 0; i < temp_seeds.length; i++) {
+					String sd = temp_seeds[i];
+					System.out.println("Adding seed " + sd + " with label " + curLabel);
+					labs.add(curLabel);					
 					sds.add(Integer.parseInt(sd));
 				}
 				curLabel++;
@@ -83,11 +85,12 @@ public class Test {
 		//Get some image metadata and create some variables
 		int width = image.getWidth(); //get image width
 		int height = image.getHeight(); //get image height
+		System.out.println("Image dimensions : " + width + " x " + height);
 		int pixelCount = width*height; //compute number of pixels
 		int edgeCount = (width*(height-1))+(height*(width-1)); //compute number of edges
 	    int pixel[] = new int[pixelCount]; //array of pixels, numbered l-r t-b
 	    Edge edge[] = new Edge[edgeCount]; //array of edges, numbered horizontally l-r followed by vertically t-b
-	    double beta =  1.0;
+	    double beta =  0.3;
 	    
 	    
 	    
@@ -95,23 +98,24 @@ public class Test {
 	    //int label_count = 2;
 	    //int seeds[] = new int[] {9900, 99};
 	    //create arrays of labels and seeds from the users inputted seeds earlier
-	    Integer[] labels_temp = labs.toArray(new Integer[labs.size()]);
-	    int[] labels = new int[labels_temp.length];
-	    for (int i = 0; i < labels_temp.length; i++) {
-	    	labels[i] = labels_temp[i];
+	    labs.remove(labs.size()-1);
+	    int[] labels = new int[labs.size()];
+	    for (int i = 0; i < labs.size(); i++) {
+	    	labels[i] = labs.get(i);
+	    	System.out.print("" + labels[i]  + " ");
 	    }
-	    Integer[] seeds_temp = sds.toArray(new Integer[sds.size()]);
-	    int[] seeds = new int[seeds_temp.length];
-	    for (int i = 0; i < seeds_temp.length; i++) {
-	    	seeds[i] = seeds_temp[i];
+	    System.out.println();
+	    int[] seeds = new int[sds.size()];
+	    for (int i = 0; i < sds.size(); i++) {
+	    	seeds[i] = sds.get(i);
 	    }
 	    int label_count = curLabel;
 	    
 	    
 	    //Read in pixels
-	    for (int j = 0; j < width; j++) {
-	      for (int i = 0; i < height; i++) {
-	    	  pixel[j*height+i] = image.getRGB(i, j); //read in each pixel (l-r, t-b);
+	    for (int j = 0; j < height; j++) {
+	      for (int i = 0; i < width; i++) {
+	    	  pixel[j*width + i] = image.getRGB(i, j); //read in each pixel (l-r, t-b);
 	      }
 	    }
 	    
@@ -156,6 +160,7 @@ public class Test {
 		double proba[][] = RandomWalkSegmentationGPU.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, labels);*/
 	    
 	    //get our resulting segmentation and mask
+	    System.out.println("Getting Probabilities");
 	    long start_time = System.nanoTime();
 		double proba[][] = RandomWalkSegmentationGPU.getProbabilities(pixel, pixelCount, edge, edgeCount, beta, seeds, labels);
 		long end_time = System.nanoTime();
@@ -164,12 +169,12 @@ public class Test {
 		double probs[][] = MatrixUtils.AddSeeds(proba, seeds, labels); //add seeds back to probabilities
 		int[][] mask = MatrixUtils.GetMask(probs, height, width, label_count); //get mask from probabilities
 		
-		File originalFile = new File("bin/original.jpg");
-		ImageIO.write(image, "jpg", originalFile);
+		//File originalFile = new File("original.jpg");
+		//ImageIO.write(image, "jpg", originalFile);
 		BufferedImage maskImage = MatrixUtils.GetMaskImage(mask, label_count); //get mask and seed images
 		BufferedImage seedImage = MatrixUtils.GetSeedImage(image, seeds, labels);
-		File maskFile = new File("bin/mask.jpg");
-		File seedFile = new File("bin/seed.jpg");
+		File maskFile = new File("mask.jpg");
+		File seedFile = new File("seed.jpg");
 		ImageIO.write(maskImage, "jpg", maskFile); //save all the images
 		ImageIO.write(seedImage, "jpg", seedFile);
 		
@@ -180,12 +185,12 @@ public class Test {
 		maskFrame.setVisible(true);
 		maskFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		JFrame originalFrame = new JFrame(); //display original image
+		/*JFrame originalFrame = new JFrame(); //display original image
 		originalFrame.add(new JPanel().add(new JLabel(new ImageIcon(image))));
 		originalFrame.setTitle("Original");
 		originalFrame.setSize(1280, 720);
 		originalFrame.setVisible(true);
-		originalFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		originalFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);*/
 		
 		JFrame seedFrame = new JFrame(); //display seed image
 		seedFrame.add(new JPanel().add(new JLabel(new ImageIcon(seedImage))));

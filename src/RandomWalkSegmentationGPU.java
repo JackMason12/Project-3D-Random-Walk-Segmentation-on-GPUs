@@ -1,14 +1,12 @@
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import jcuda.Pointer;
 import jcuda.Sizeof;
-import jcuda.jcusparse.JCusparse;
 import jcuda.jcusparse.cusparseHandle;
 import jcuda.jcusparse.cusparseMatDescr;
-import jcuda.jcusparse.cusparseSolveAnalysisInfo;
 import jcuda.runtime.JCuda;
-import jcuda.jcusparse.cusparseStatus;
 import static jcuda.runtime.cudaMemcpyKind.*;
 import static jcuda.jcusparse.JCusparse.*;
 import static jcuda.jcusparse.cusparseIndexBase.CUSPARSE_INDEX_BASE_ZERO;
@@ -42,15 +40,11 @@ public class RandomWalkSegmentationGPU {
 	    int CRowCoo[] = new int[nnzC]; //arrays to hold matrix C in COO format
 	    int CColCoo[] = new int[nnzC];
 	    double CValCoo[] = new double[nnzC];
-	    double totweight = 0;
 	    for (int i = 0; i < nnzC; i++) { //populate COO representation of C
 	    	CRowCoo[i] = i;//diagonal matrix of edge weights
 	    	CColCoo[i] = i;
-	    	totweight += weight(pixels[edges[i].start], pixels[edges[i].end], beta);
 	    	CValCoo[i] = weight(pixels[edges[i].start], pixels[edges[i].end], beta);
 	    }
-	    double avgweight = totweight/nnzC;
-	    
 	    Pointer CRowCooPtr = new Pointer(); //pointers for creating CSR matrix C
 	    Pointer CRowCSRPtr = new Pointer();
 	    Pointer CColCSRPtr = new Pointer();
@@ -69,6 +63,11 @@ public class RandomWalkSegmentationGPU {
 	    //convert row to CSR representation
 	    cusparseXcoo2csr(handle, CRowCooPtr, nnzC, nnzC, CRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    JCuda.cudaDeviceSynchronize();
+	    
+	    System.out.println("C completed");
+	    CRowCoo = null;
+	    CColCoo = null;
+	    CValCoo = null;
 	    
 	    /*
 	     * Printing stuff for testing!!
@@ -139,6 +138,10 @@ public class RandomWalkSegmentationGPU {
 	    cusparseXcoo2csr(handle, ARowCooPtr, nnzA, edgeCount, ARowCSRPtr, CUSPARSE_INDEX_BASE_ZERO);
 	    JCuda.cudaDeviceSynchronize();
 	    
+	    System.out.println("A completed");
+	    ARowCoo = null;
+	    AColCoo = null;
+	    AValCoo = null;
 	    /*
 	     * Printing stuff for testing!!
 	     */
@@ -241,7 +244,7 @@ public class RandomWalkSegmentationGPU {
 	    //perform multiplication
 	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrA, nnzA, AValCSRPtr, ARowCSRPtr, AColCSRPtr, descrC, nnzC, CValCSRPtr, CRowCSRPtr, CColCSRPtr, descrAtC, AtCValCSRPtr, AtCRowCSRPtr, AtCColCSRPtr);
 	    JCuda.cudaDeviceSynchronize();
-	    
+	    System.out.println("A^T*C completed");
 	    //free CRowCSRPtr, CColCSRPtr, CValCSRPtr
 	    cudaFree(CRowCSRPtr);
 	    cudaFree(CColCSRPtr);
@@ -315,7 +318,7 @@ public class RandomWalkSegmentationGPU {
 	    //perform multiplication to get laplacian
 	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrAtC, nnzAtC[0], AtCValCSRPtr, AtCRowCSRPtr, AtCColCSRPtr, descrA, nnzA, AValCSRPtr, ARowCSRPtr, AColCSRPtr, descrLap, LapValCSRPtr, LapRowCSRPtr, LapColCSRPtr);
 	    JCuda.cudaDeviceSynchronize();
-	    
+	    System.out.println("Laplacian completed");
 	    //free AtCRowCSRPtr, AtCColCSRPtr, AtCValCSRPtr, ARowCSRPtr, AColCSRPtr, AValCSRPtr
 	    cudaFree(AtCRowCSRPtr);
 	    cudaFree(AtCColCSRPtr);
@@ -386,18 +389,111 @@ public class RandomWalkSegmentationGPU {
 	    cudaFree(LapValCSRPtr);
 	    
 	    /*
+	     * TODO: Finish this method for removing rows/columns
+	     * TODO: Doesn't work right now i dont get why
+	     *//*
+	    
+	    int unseeded = pixelCount-num_seeds; //number of unseeded pixels
+	    double[][] LapU = new double[pixelCount][pixelCount]; //arrays for matrices
+	    
+	    for (int i = 0; i < nnzLap[0]; i++) {
+	    	LapU[LapColCoo[i]][LapRowCoo[i]] = LapValCoo[i];
+	    	//System.out.print("" + i + "/"+nnzLap[0] + " laplacian elements added\r");
+	    } //convert to dense matrices
+	    
+	    ArrayList<Integer> seed = new ArrayList<Integer>(); //get seeds in arraylist
+	    for (int i = 0; i < num_seeds; i++) { //get seeds in arraylist
+	    	seed.add(seeds[i]); //just so we get .contains method
+	    }
+	    int index = 0;
+	    int unseeds[] = new int[pixelCount-num_seeds];
+	    for (int i = 0; i < pixelCount; i++) { //populate array of unseeded pixels
+	    	if (!seed.contains(i)) unseeds[index++] = i;
+	    }
+	    seed = null;
+	    
+	    double[][] Lu = new double[unseeded][unseeded];
+	    for (int i = 0; i < unseeded; i++) {
+	    	for (int j = 0; j < unseeded; j++) {
+	    		Lu[i][j] = LapU[unseeds[i]][unseeds[j]]; //just add unseeded nodes
+	    		//System.out.print("" + (i*unseeded + j) + "/" + (unseeded*unseeded) + " added to Lu\r");
+	    	}
+	    }
+	    LapU = null;
+	    
+	    int nnzLu = 0;
+	    for (int i = 0; i < unseeded; i++) {
+	    	for (int j = 0; j < unseeded; j++) {
+	    		if (Lu[i][j] != 0) nnzLu++;
+	    	}
+	    } //get nnz of lu
+	    
+	    int[] LuRowCooArr = new int[nnzLu];
+	    int[] LuColCooArr = new int[nnzLu];
+	    double[] LuValCooArr = new double[nnzLu]; //create COO representation
+	    int ix = 0;
+		for (int i = 0; i < unseeded; i++) {
+			for (int j = 0; j < unseeded; j++) {
+	    		if (Lu[i][j] != 0) {
+	    			LuRowCooArr[ix] = i;
+	    			LuColCooArr[ix] = j;
+	    			LuValCooArr[ix++] = Lu[i][j];
+	    			//System.out.print("" + ix + "/" + nnzLu + " elements added to COO\r");
+	    		}
+	    	}
+	    } //store Lu in COO form
+	    Lu = null;
+	    
+	    double[][] LapB = new double[pixelCount][pixelCount];
+	    for (int i = 0; i < nnzLap[0]; i++) {
+	    	LapB[LapColCoo[i]][LapRowCoo[i]] = LapValCoo[i];
+	    }
+	    
+	    double[][] Lb = new double[num_seeds][unseeded];
+	    for (int i = 0; i < num_seeds; i++) {
+	    	for (int j = 0; j < unseeded; j++) {
+	    		Lb[i][j] = LapB[seeds[i]][unseeds[j]];
+	    		//System.out.print("" + (i*unseeded + j) + "/" + (num_seeds*unseeded) + " added to Lb\r");
+	    	}
+	    }
+	    LapB = null;
+	    
+	    int nnzLb = 0;
+	    for (int i = 0; i < num_seeds; i++) {
+	    	for (int j = 0; j < unseeded; j++) {
+	    		if (Lb[i][j] != 0) nnzLb++;
+	    	}
+	    }
+	    
+	    int[] LbRowCooArr = new int[nnzLb];
+	    int[] LbColCooArr = new int[nnzLb];
+	    double[] LbValCooArr = new double[nnzLb];
+	    ix = 0;
+		for (int i = 0; i < num_seeds; i++) {
+			for (int j = 0; j < unseeded; j++) {
+	    		if (Lb[i][j] != 0) {
+	    			LbRowCooArr[ix] = i;
+	    			LbColCooArr[ix] = j;
+	    			LbValCooArr[ix++] = -Lb[i][j];
+	    		}
+	    	}
+	    }
+	    Lb = null;
+	    
+	    /*
 	     * To get Lu (LHS of equation), we remove all the seed pixel rows/columns
 	     * 
 	     */
 	    
 	    //coo representation for Lu (LHS of eq)
-	    ArrayList<Integer> LuRowCoo = new ArrayList<Integer>();
-	    ArrayList<Integer> LuColCoo = new ArrayList<Integer>();
-	    ArrayList<Double> LuValCoo = new ArrayList<Double>();
 	    
-	    ArrayList<Integer> LbRowCoo = new ArrayList<Integer>(); //coo for Lb (part of RHS of eq)
-	    ArrayList<Integer> LbColCoo = new ArrayList<Integer>();
-	    ArrayList<Double> LbValCoo = new ArrayList<Double>();
+	    ArrayList<Integer> LuRowCoo = new ArrayList<Integer>(nnzLap[0]);
+	    ArrayList<Integer> LuColCoo = new ArrayList<Integer>(nnzLap[0]);
+	    ArrayList<Double> LuValCoo = new ArrayList<Double>(nnzLap[0]);
+	    
+	    ArrayList<Integer> LbRowCoo = new ArrayList<Integer>(nnzLap[0]); //coo for Lb (part of RHS of eq)
+	    ArrayList<Integer> LbColCoo = new ArrayList<Integer>(nnzLap[0]);
+	    ArrayList<Double> LbValCoo = new ArrayList<Double>(nnzLap[0]);
 	    //System.out.println("ArrayLists created");
 	    
 	    for (int i = 0; i < nnzLap[0]; i++) { //populate array lists
@@ -410,7 +506,14 @@ public class RandomWalkSegmentationGPU {
 	    	//if (LapValCoo[i] != (double) 0) System.out.printf("Row: %d, Col: %d, Val: %f\n", LapRowCoo[i], LapColCoo[i], LapValCoo[i]);
 	    }
 	   // System.out.println("ArrayLists populated");
-	     
+	    
+	    
+	    /*
+	     * TODO: This stuff is filthy slow for larger matrices
+	     * Probably more efficient to convert to dense
+	     * then remove rows/columns
+	     */
+	    
 	    int ix; //index
 	    int nnzLu = nnzLap[0]; //num nonzero for Lu and Lb
 	    int nnzLb = nnzLap[0];
@@ -439,6 +542,7 @@ public class RandomWalkSegmentationGPU {
 	    		}
 	    	}
 	    }
+	
 	    seeds_temp = seeds.clone();
 	    for (int i = 0; i < num_seeds; i++) { //for each seed
 	    	ix = LuColCoo.indexOf(seeds_temp[i]);
@@ -471,13 +575,13 @@ public class RandomWalkSegmentationGPU {
 	    	LuColCooArr[i] = LuColCoo.get(i);
 	    	LuValCooArr[i] = LuValCoo.get(i);
 	    }
-	    
+	    System.out.println("Lu Calculated");
 	    /*
 	     * To get Lb (part of RHS), we remove seed rows and unseeded columns from the
 	     * laplacian
 	     */
 	    
-	    ArrayList<Integer> seed = new ArrayList<Integer>(); //get seeds in arraylist
+	    ArrayList<Integer> seed = new ArrayList<Integer>(num_seeds); //get seeds in arraylist
 	    for (int i = 0; i < num_seeds; i++) { //get seeds in arraylist
 	    	seed.add(seeds[i]); //just so we get .contains method
 	    }
@@ -509,7 +613,7 @@ public class RandomWalkSegmentationGPU {
 	    for (int i = 0; i < pixelCount; i++) { //populate array of unseeded pixels
 	    	if (!seed.contains(i)) unseeded[index++] = i;
 	    }
-	    for (int i = 0; i < pixelCount-num_seeds; i++) { //remove unseeded columns
+	    for (int i = 0; i < pixelCount - num_seeds ; i++) { //remove unseeded columns
 	    	ix = LbColCoo.indexOf(unseeded[i]);
 	    	while (ix != -1) {
 	    		LbRowCoo.remove(ix);
@@ -529,9 +633,16 @@ public class RandomWalkSegmentationGPU {
 	    			unseeded[j]--;
 	    		}
 	    	}
+	    	//String out = ""+i+"/"+(pixelCount-num_seeds)+" unseeded columns removed from Lb\r";
+	    	//System.out.print(out);
+	    	/*try {
+				System.out.write(out.getBytes());
+			} catch (IOException e) {
+			}*/
 	    }
+	    System.out.print("\n");
 	   
-	    
+	    System.out.println("Lb calculated");
 	    /*
 	     * create matrix b (second half of RHS)
 	     * RHS is -Lb*b
@@ -590,7 +701,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    cusparseXcoo2csr(handle, bRowCooPtr, nnzB, nnzB, bRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert COO row representation to CSR (for multiplication later)
 	    JCuda.cudaDeviceSynchronize(); //sync up
-	    
+	    System.out.println("b completed");
 	    /*
 	     * Printing stuff for testing!!
 	     *
@@ -653,7 +764,7 @@ public class RandomWalkSegmentationGPU {
 	    cusparseXcoo2csr(handle, LbRowCooPtr, nnzLb, m, LbRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert COO representation into csr representation
 	    //System.out.println(MatrixUtils.PointerContents(LbRowCSRPtr, m+1, true));
 	    JCuda.cudaDeviceSynchronize(); //synchronise
-	    
+	    System.out.println("Lb completed");
 	    /*
 	     * Printing stuff for testing!!
 	     *
@@ -730,7 +841,7 @@ public class RandomWalkSegmentationGPU {
 	    cudaMalloc(RHSValCSRPtr, nnzRHS[0]*Sizeof.DOUBLE);
 	    cusparseDcsrgemm(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, m, n, k, descrLb, nnzLb, LbValCSRPtr, LbRowCSRPtr, LbColCSRPtr, descrb, nnzB, bValCSRPtr, bRowCSRPtr, bColCSRPtr, descrRHS, RHSValCSRPtr, RHSRowCSRPtr, RHSColCSRPtr);
 	    JCuda.cudaDeviceSynchronize(); //perform multiplication and synchronise
-	    
+	    System.out.println("RHS completed");
 	    cudaFree(bRowCSRPtr); //free up pointers that are no-longer needed
 	    cudaFree(bColCSRPtr);
 	    cudaFree(bValCSRPtr);
@@ -892,7 +1003,7 @@ public class RandomWalkSegmentationGPU {
 	    
 	    cusparseXcoo2csr(handle, LuRowCooPtr, nnzLu, pixelCount-num_seeds, LuRowCSRPtr, CUSPARSE_INDEX_BASE_ZERO); //convert coo representation to csr representation
 	    JCuda.cudaDeviceSynchronize(); //sync up
-	    
+	    System.out.println("Lu completed");
 	    /*
 	     * Printing stuff for testing!!
 	     *
@@ -950,13 +1061,6 @@ public class RandomWalkSegmentationGPU {
 	    double alphaArr[] = new double[1]; //array to hold alpha
 	    alphaArr[0] = 1;
 	    
-	    //TODO: Current Point of Failure, solver does not work
-	    //could we employ till's solver for each label? That takes square matrix, which Lu is not necessarily
-	    
-	    //compute LU decomposition, get L, U and P
-	    //solve Ly = Pb
-	    //solve Ux = y
-	    //then output x???
 	    
 	    cudaMalloc(alpha, Sizeof.DOUBLE); //allocate memory for alpha
 	    cudaMemcpy(alpha, Pointer.to(alphaArr), Sizeof.DOUBLE, cudaMemcpyHostToDevice); //copy value of alpha in (just 1 we dont want any multiplication)
@@ -991,7 +1095,7 @@ public class RandomWalkSegmentationGPU {
 	     */
 	    //System.out.println("Output (X)");
 	    
-	    double out[][] = new double[num_labels][m];
+	    //double out[][] = new double[num_labels][m];
 	    /*/System.out.printf("%d\n", Prob.length);
 	    for (int i = 0; i < num_labels; i++) { //print out array
 	    	for (int j = 0; j < m; j++) {
@@ -1015,11 +1119,17 @@ public class RandomWalkSegmentationGPU {
 	    for (int i = 0; i < n; i++) {
 	    	vects[i] = new denseVector(rhs[i]); //create a vector for each column of the right hand side of the equation
 	    }
+	    
+	    System.out.println("Solving");
+	    long startSolve = System.nanoTime();
 	    for (int i = 0; i < n; i++) { //solve for each column
 	    	//System.out.println(MatrixUtils.PointerContents(vects[i].getPtr(), m, false));
 	    	solution[i] = MatrixUtils.LuSolve(handle, descrLu, m, n, nnzLu, LuRowCSRPtr, LuColCSRPtr, LuValCSRPtr, vects[i], false);
-	    	System.out.println("done");
+	    	//System.out.println("done");
 	    }
+	    long endSolve = System.nanoTime();
+	    long timeSolve = (endSolve - startSolve)/1000000;
+	    System.out.println("Time to solve: " + timeSolve + "ms");
 	    
 	    //for (int i = 0; i < n; i++) {
 	    	//for (int j = 0; j < m; j++) {
@@ -1058,11 +1168,11 @@ public class RandomWalkSegmentationGPU {
 		Color color2 = new Color(b);
 		//System.out.printf("Getting weight between (%d, %d, %d, %d) and (%d, %d, %d, %d)\n",color1.getRed(), color1.getGreen(), color1.getBlue(), color1.getAlpha(), color2.getRed(), color2.getGreen(), color2.getBlue(), color2.getAlpha());
 		//System.out.println("Getting weight between " + color1.toString() + " and " + color2.toString());
-		int red = (int) Math.pow(color1.getRed() - color2.getRed(), 2);
-		int green = (int) Math.pow(color1.getGreen() - color2.getGreen(), 2);
-		int blue = (int) Math.pow(color1.getBlue() - color2.getBlue(), 2);
+		int red = (int) Math.abs(color1.getRed() - color2.getRed());
+		int green = (int) Math.abs(color1.getGreen() - color2.getGreen());
+		int blue = (int) Math.abs(color1.getBlue() - color2.getBlue());
 		//int alpha = (int) Math.pow(color1.getAlpha() - color2.getAlpha(), 2);
-		int sum = red+green+blue;
+		double sum = (red+green+blue);
 		
 		//int tot1 = Math.abs(color1.getRed()) + Math.abs(color1.getGreen()) + Math.abs(color1.getBlue());
 		//int tot2 = Math.abs(color2.getRed()) + Math.abs(color2.getGreen()) + Math.abs(color2.getBlue());
